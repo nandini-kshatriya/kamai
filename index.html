@@ -1,0 +1,1380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kamai</title>
+<meta name="description" content="Kamai shows Indian delivery riders what they really keep per hour after fuel, bike and phone costs. Portfolio project by Nandini Kshatriya.">
+<meta name="theme-color" content="#EEF0EB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101211" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Kamai visual identity: a rider's ledger on asphalt. Cool stone neutrals, ink type, marigold for actions and
+   a ledger green that only ever means "money you kept". Built for one hand on a cheap phone. */
+:root{
+  --bg:#EEF0EB; --surface:#FAFBF8; --raised:#FFFFFF; --sunken:#E2E5DE; --ink:#191B18; --ink-2:#3F433D; --muted:#646A61; --faint:#9AA096; --line:#D9DDD3;
+  --accent:#F2A516; --accent-ink:#221600; --accent-text:#8C5A00; --accent-weak:#FCEFCF;
+  --hero:#1D211E; --hero-ink:#F3F5EF; --hero-muted:#AEB5AA; --hero-line:#353B36;
+  --net:#1E7A4C; --net-weak:#DDF0E4; --fuel:#D9792A; --fixed:#7568B8; --bad:#B3261E; --bad-weak:#FBE5E2; --warn:#99600A; --warn-weak:#FBEFD6;
+  --display:"Baloo 2","Mukta",system-ui,sans-serif; --body:"Mukta","Noto Sans Devanagari",system-ui,sans-serif;
+  --r:18px; --r-sm:12px;
+  --shadow:0 1px 2px rgba(28,26,22,.05),0 2px 8px rgba(28,26,22,.04);
+  --pop:0 18px 40px rgba(28,26,22,.18);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101211; --surface:#181B19; --raised:#1F2320; --sunken:#252A26; --ink:#EEF1EB; --ink-2:#D0D5CC; --muted:#9BA397; --faint:#6E766B; --line:#2C322D;
+  --accent:#F5B23A; --accent-ink:#1F1400; --accent-text:#F5B23A; --accent-weak:#3A2B0E;
+  --hero:#1F2320; --hero-ink:#F3F5EF; --hero-muted:#A7AFA3; --hero-line:#353B36;
+  --net:#4FC48A; --net-weak:#163324; --fuel:#F09A55; --fixed:#A99CEB; --bad:#F2776C; --bad-weak:#3A1C19; --warn:#E8B054; --warn-weak:#382A12;
+  --shadow:none; --pop:0 18px 40px rgba(0,0,0,.55); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101211; --surface:#181B19; --raised:#1F2320; --sunken:#252A26; --ink:#EEF1EB; --ink-2:#D0D5CC; --muted:#9BA397; --faint:#6E766B; --line:#2C322D;
+  --accent:#F5B23A; --accent-ink:#1F1400; --accent-text:#F5B23A; --accent-weak:#3A2B0E;
+  --hero:#1F2320; --hero-ink:#F3F5EF; --hero-muted:#A7AFA3; --hero-line:#353B36;
+  --net:#4FC48A; --net-weak:#163324; --fuel:#F09A55; --fixed:#A99CEB; --bad:#F2776C; --bad-weak:#3A1C19; --warn:#E8B054; --warn-weak:#382A12;
+  --shadow:none; --pop:0 18px 40px rgba(0,0,0,.55); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);line-height:1.1;margin:0;text-wrap:balance;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.4rem} h3{font-size:1.08rem}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+a{color:var(--accent-text)}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.top-in{max-width:1120px;margin-inline:auto;padding:10px 16px;display:flex;align-items:center;gap:8px}
+.brand{display:flex;align-items:center;gap:8px;margin-right:auto;min-width:0}
+.brand svg{width:30px;height:30px;flex:none}
+.brand b{font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;line-height:1}
+.brand .dev{font-family:var(--display);font-weight:700;color:var(--accent-text);font-size:1.05rem;line-height:1;padding-top:2px}
+.seg{display:inline-flex;background:var(--sunken);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:4px 11px;font-weight:600;color:var(--muted);min-height:32px;border-radius:999px;font-size:.9rem;transition:background .15s,color .15s}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.icon-btn{border:0;background:var(--sunken);border-radius:999px;width:38px;height:38px;display:inline-grid;place-items:center;color:var(--ink-2);flex:none}
+.icon-btn:hover{color:var(--ink)}
+.viewsw{max-width:1120px;margin-inline:auto;padding:0 16px 8px;display:flex;justify-content:flex-start}
+
+/* ---------- shell ---------- */
+.shell{max-width:1120px;margin-inline:auto;padding:6px 16px 140px;display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:40px;align-items:start}
+.app{display:flex;flex-direction:column;gap:14px;min-width:0}
+.why{position:sticky;top:120px;display:flex;flex-direction:column;gap:14px;min-width:0;max-width:60ch;padding:22px 24px;border-radius:var(--r);border:1px dashed var(--line);background:color-mix(in srgb,var(--surface) 55%,transparent)}
+.why .eyebrow{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--accent-text)}
+.why h2{font-size:1.45rem}
+.why p,.why li{color:var(--ink-2)}
+.why ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.why .src{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.why-m.card{display:none}
+
+.demo{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;background:var(--accent-weak);border-radius:var(--r-sm);padding:10px 12px 10px 14px;font-size:.88rem;line-height:1.4}
+.demo b{color:var(--accent-text)}
+.demo .row{display:flex;gap:8px;flex:none}
+
+.tabs{display:flex;gap:2px;background:var(--sunken);border-radius:999px;padding:4px}
+.tabs button{flex:1;border:0;background:none;border-radius:999px;padding:6px 4px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1;min-height:48px;justify-content:center;transition:color .15s,background .15s}
+.tabs button svg{width:21px;height:21px}
+.tabs button[aria-current="page"]{background:var(--raised);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tabs .lbl{font-size:.8rem}
+
+.view{display:none;flex-direction:column;gap:14px}
+.view.on{display:flex;animation:rise .2s ease-out}
+@keyframes rise{from{opacity:.3;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0;box-shadow:var(--shadow)}
+.card h3{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h3 .muted{font-family:var(--body);font-weight:500}
+.sec-title{font-family:var(--display);font-weight:700;font-size:1.08rem;padding:4px 4px 0}
+
+/* ---------- hero ---------- */
+.hero{background:var(--hero);color:var(--hero-ink);border:0;padding:18px 18px 18px;gap:14px;box-shadow:var(--pop);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-70px;bottom:-90px;width:200px;height:200px;border-radius:50%;border:26px solid var(--accent);opacity:.08;pointer-events:none}
+.hero>*{position:relative;z-index:1}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.hero .lab{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--hero-muted)}
+.hero .big{font-family:var(--display);font-weight:800;font-size:3.6rem;line-height:.9;letter-spacing:-.03em;margin-top:2px}
+.hero .big small{font-size:1.2rem;font-weight:700;color:var(--hero-muted);margin-left:4px;letter-spacing:0}
+.hero .sub{color:var(--hero-muted);font-size:.95rem}
+.hero .sub b{color:var(--hero-ink)}
+.hero .seg{background:rgba(255,255,255,.08)}
+.hero .seg button{color:var(--hero-muted);font-size:.84rem;padding:3px 10px;min-height:30px}
+.hero .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.fall{display:flex;flex-direction:column;gap:10px}
+.fall .bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--hero-line);gap:2px}
+.fall .bar i{display:block;height:100%}
+.split{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.split div{display:flex;flex-direction:column;gap:1px;border-top:2px solid var(--c);padding-top:6px}
+.split span{font-size:.78rem;color:var(--hero-muted);line-height:1.2}
+.split b{font-family:var(--display);font-size:1.12rem;font-weight:700;line-height:1.1}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.86rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.chipline{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 10px;font-size:.84rem;font-weight:600;background:var(--sunken);color:var(--ink-2);line-height:1.6}
+.hero .chip{background:rgba(255,255,255,.08);color:var(--hero-ink)}
+.chip.good{background:var(--net-weak);color:var(--net)} .chip.warn{background:var(--warn-weak);color:var(--warn)} .chip.bad{background:var(--bad-weak);color:var(--bad)} .chip.acc{background:var(--accent-weak);color:var(--accent-text)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:9px 14px;font-weight:600;min-height:44px;transition:transform .08s,background .15s,border-color .15s}
+.btn:hover{border-color:var(--faint)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.btn.ink{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{background:var(--sunken)}
+.btn.sm{min-height:34px;padding:4px 11px;font-size:.88rem;border-radius:10px}
+.btn.block{width:100%}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* ---------- lists and alerts ---------- */
+.alert{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:11px 0;border-bottom:1px solid var(--line);align-items:start}
+.alert:last-child{border-bottom:0;padding-bottom:2px}
+.alert:first-child{padding-top:2px}
+.alert .stripe{width:28px;height:28px;border-radius:9px;background:var(--warn-weak);display:grid;place-items:center}
+.alert .stripe::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--warn)}
+.alert.bad .stripe{background:var(--bad-weak)} .alert.bad .stripe::before{background:var(--bad)}
+.alert.good .stripe{background:var(--net-weak)} .alert.good .stripe::before{background:var(--net)}
+.alert b{display:block;font-weight:600;line-height:1.3}
+.alert .muted{display:block;margin-top:2px}
+
+.list{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:11px 0;border-bottom:1px solid var(--line);align-items:center}
+.item:last-child{border-bottom:0}
+.item .t{font-weight:600}
+.item .r{text-align:right}
+.item .amt{font-family:var(--display);font-weight:700;font-size:1.12rem;font-variant-numeric:tabular-nums}
+.item .net{font-family:var(--display);font-weight:700;font-size:1.12rem;font-variant-numeric:tabular-nums;color:var(--net)}
+.item button.link{border:0;background:none;padding:0;text-align:left;width:100%;border-radius:6px}
+.item:has(button.link):hover{background:linear-gradient(90deg,transparent,var(--sunken) 8%,var(--sunken) 92%,transparent)}
+
+table{width:100%;border-collapse:collapse;font-size:.94rem}
+th{text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--line);font-weight:600}
+td{padding:9px 6px;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.total td{font-weight:700}
+tr.total td.n{font-family:var(--display);font-size:1.05rem}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.weeknav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.weeknav b{font-family:var(--display);font-size:1.12rem}
+.weeknav .btn{width:40px;padding:0;font-size:1.2rem}
+svg text{fill:var(--muted);font-family:var(--body)}
+
+.prog{height:8px;border-radius:4px;background:var(--sunken);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.verdict{font-family:var(--display);font-size:1.25rem;font-weight:700;line-height:1.2}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;font-size:.93rem;background:var(--sunken);border-radius:var(--r-sm);padding:12px 14px}
+.kv span:nth-child(even){text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:15;display:none;border-radius:999px;padding:12px 20px;min-height:52px;box-shadow:0 10px 24px rgba(242,165,22,.35),0 2px 6px rgba(0,0,0,.15);font-size:1rem}
+
+/* ---------- forms ---------- */
+dialog{border:0;border-radius:22px;background:var(--surface);color:var(--ink);padding:0;width:min(480px,calc(100vw - 20px));max-height:calc(100dvh - 24px);box-shadow:var(--pop)}
+dialog::backdrop{background:rgba(18,17,16,.5);backdrop-filter:blur(2px)}
+dialog form{display:flex;flex-direction:column;gap:14px;padding:20px}
+dialog h2{font-size:1.45rem}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f.full{grid-column:1/-1}
+.f label{font-size:.86rem;font-weight:600;color:var(--ink-2)}
+.f input,.f select,textarea{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;min-height:46px;width:100%;font-size:1rem}
+.f input:focus,.f select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+.f .hint{font-size:.78rem;color:var(--muted);line-height:1.3}
+.err{color:var(--bad);font-size:.9rem;font-weight:600}
+.err:empty{display:none}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.confirm{background:var(--bad-weak);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;z-index:40;max-width:calc(100vw - 32px);box-shadow:var(--pop);animation:rise .15s}
+
+/* ---------- case study ---------- */
+.doc{display:none;max-width:1120px;margin-inline:auto;padding:12px 16px 90px}
+.doc.on{display:block}
+.doc article{max-width:74ch;margin-inline:auto;display:flex;flex-direction:column;gap:14px;font-size:1.03rem;line-height:1.65;color:var(--ink-2)}
+.doc h1{font-size:2.5rem;color:var(--ink);letter-spacing:-.025em}
+.doc h2{font-size:1.6rem;margin-top:18px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink)}
+.doc h3{margin-top:6px;color:var(--ink)}
+.doc strong{color:var(--ink)}
+.doc ul,.doc ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:5px}
+.doc blockquote{margin:0;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 18px}
+.doc blockquote p{margin:.3em 0}
+.doc table{font-size:.88rem;line-height:1.45}
+.doc .table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:2px 6px}
+.doc code{background:var(--sunken);padding:0 5px;border-radius:5px;font-size:.88em}
+.doc img{max-width:100%;border-radius:12px}
+.tag{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:0 6px;vertical-align:2px;font-family:var(--body);line-height:1.6}
+.tag.v{background:var(--net-weak);color:var(--net)} .tag.q{background:var(--accent-weak);color:var(--accent-text)} .tag.a{background:var(--warn-weak);color:var(--warn)} .tag.s{background:var(--sunken);color:var(--muted)} .tag.c{background:var(--bad-weak);color:var(--bad)}
+
+@media (max-width:920px){
+  .shell{grid-template-columns:minmax(0,1fr);padding-bottom:150px}
+  .app{max-width:520px;margin-inline:auto;width:100%}
+  .why{display:none}
+  .why-m.card{display:flex}
+  .viewsw{max-width:520px;padding-inline:16px}
+  .tabs{position:fixed;left:0;right:0;bottom:0;border-radius:20px 20px 0 0;padding:6px 8px calc(8px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);z-index:20;box-shadow:0 -6px 20px rgba(0,0,0,.06);gap:0}
+  .tabs button{background:none!important;box-shadow:none!important;position:relative;min-height:52px}
+  .tabs button[aria-current="page"]{color:var(--ink)}
+  .tabs button[aria-current="page"]::before{content:"";position:absolute;top:2px;width:36px;height:30px;border-radius:999px;background:var(--accent-weak);z-index:-1}
+  .tabs button[aria-current="page"] svg{color:var(--accent-text)}
+  .fab{display:inline-flex}
+  .log-inline{display:none}
+}
+@media (max-width:380px){.hero .big{font-size:3rem}.fgrid{grid-template-columns:minmax(0,1fr)}.tabs .lbl{font-size:.72rem}.brand .dev{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+details.why-m{flex-direction:column}
+details.why-m summary{cursor:pointer;font-weight:600;color:var(--accent-text);list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.why-m summary::-webkit-details-marker{display:none}
+details.why-m summary::after{content:"+";font-size:1.3rem;line-height:1}
+details.why-m[open] summary::after{content:"–"}
+details.why-m > div{display:flex;flex-direction:column;gap:8px;padding-top:8px;color:var(--ink-2)}
+details.why-m ul{margin:0;padding-left:18px}
+details.why-m .src{font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M10 8v16M10 16.5l8-8.5M13.5 13l7 11" stroke="var(--accent-ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><b>Kamai</b><span class="dev" lang="hi">कमाई</span></div>
+    <div class="seg" role="group" aria-label="Language"><button id="lnEn" aria-pressed="true">EN</button><button id="lnHi" aria-pressed="false" lang="hi">हिं</button></div>
+    <button class="icon-btn" id="setBtn" aria-label="Vehicle and costs" title="Vehicle and costs"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+  </div>
+  <div class="viewsw"><div class="seg" role="group" aria-label="View"><button id="vApp" aria-pressed="true" data-i="viewApp">Rider app</button><button id="vCase" aria-pressed="false" data-i="viewCase">Case study</button></div></div>
+</header>
+
+<div class="shell" id="shell">
+  <main class="app">
+    <div class="demo" id="demoBar"></div>
+    <nav class="tabs" aria-label="Sections">
+      <button data-tab="today" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" stroke-linejoin="round"/></svg><span class="lbl" data-i="tToday">Today</span></button>
+      <button data-tab="week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12M10 20V5M15 20v-9M20 20v-5"/></svg><span class="lbl" data-i="tWeek">Week</span></button>
+      <button data-tab="targets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg><span class="lbl" data-i="tTargets">Targets</span></button>
+      <button data-tab="cash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg><span class="lbl" data-i="tCash">Cash plan</span></button>
+      <button data-tab="hisab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" stroke-linejoin="round"/><path d="M9 12h7M9 16h7M9 8h3"/></svg><span class="lbl" data-i="tHisab">Hisab</span></button>
+    </nav>
+
+    <!-- TODAY -->
+    <section class="view on" id="v-today">
+      <div class="card hero">
+        <div class="hero-top">
+          <span class="lab" data-i="netHr">Real earnings per hour</span>
+          <div class="seg" role="group" aria-label="Period"><button data-range="day" aria-pressed="true" data-i="rDay">Last day</button><button data-range="week" aria-pressed="false" data-i="rWeek">This week</button><button data-range="d28" aria-pressed="false" data-i="r28">28 days</button></div>
+        </div>
+        <div><div class="big num" id="heroNet">–</div></div>
+        <p class="sub" id="heroSub"></p>
+        <div class="fall"><div class="bar" id="heroBar"></div><div class="split" id="heroLegend"></div></div>
+        <div class="chipline" id="heroChips"></div>
+      </div>
+      <button class="btn primary block log-inline" id="logBtn2" data-i="logShift">+ Log a shift</button>
+      <div class="card"><h3 data-i="needsAttention">Needs your attention</h3><div id="alerts"></div></div>
+      <div class="card"><h3><span data-i="recent">Recent shifts</span><span class="muted small" data-i="tapEdit">Tap to edit</span></h3><div class="list" id="recent"></div></div>
+    </section>
+
+    <!-- WEEK -->
+    <section class="view" id="v-week">
+      <div class="card">
+        <div class="weeknav"><button class="btn sm" id="wPrev" aria-label="Previous week">‹</button><b id="wLabel"></b><button class="btn sm" id="wNext" aria-label="Next week">›</button></div>
+        <div id="wChart"></div>
+        <div class="legend"><span><i style="background:var(--net)"></i><span data-i="lNet">Kept (net)</span></span><span><i style="background:var(--fuel)"></i><span data-i="lFuel">Fuel</span></span><span><i style="background:var(--fixed)"></i><span data-i="lFixed">Bike, phone & EMI</span></span></div>
+      </div>
+      <div class="card"><h3 data-i="weekPL">Week profit & loss</h3><div class="tw"><table id="wPL"></table></div></div>
+      <div class="card"><h3 data-i="byPlatform">Which app pays you better</h3><div class="tw"><table id="wPlat"></table></div><p class="muted small" data-i="platNote">Per hour after fuel. Fixed costs are the same whichever app you ride for, so they are left out of this comparison.</p></div>
+      <div class="card"><h3 data-i="bySlot">Best time slots (last 28 days)</h3><div class="tw"><table id="wSlot"></table></div></div>
+    </section>
+
+    <!-- TARGETS -->
+    <section class="view" id="v-targets">
+      <div class="card"><h3 data-i="tgtTitle">Is this incentive worth chasing?</h3><p class="muted small" data-i="tgtIntro">Enter a target from your app. Kamai uses your own speed, pay per order and fuel cost from the last 28 days to check whether the extra hours pay.</p><button class="btn ink" id="tgtAdd" data-i="addTarget">+ Add a target</button></div>
+      <div id="tgtList" style="display:flex;flex-direction:column;gap:14px"></div>
+    </section>
+
+    <!-- CASH -->
+    <section class="view" id="v-cash">
+      <div class="card">
+        <h3 data-i="cashTitle">Next 14 days of cash</h3>
+        <div class="fgrid">
+          <div class="f"><label for="cBal" data-i="cashNow">Cash + bank now (₹)</label><input id="cBal" type="number" inputmode="numeric" min="0" step="1"></div>
+          <div class="f"><label for="cHouse" data-i="house">Home spending per day (₹)</label><input id="cHouse" type="number" inputmode="numeric" min="0" step="10"></div>
+        </div>
+        <div id="cVerdict" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div id="cChart"></div>
+      </div>
+      <div class="card"><h3><span data-i="dues">Bills and EMIs</span><button class="btn sm" id="dueAdd" data-i="addDue">+ Add</button></h3><div class="list" id="dueList"></div></div>
+      <div class="card"><h3 data-i="payouts">Expected payouts</h3><div class="list" id="payList"></div><p class="muted small" data-i="payNote">Estimated from what you logged. Platforms pay the Monday after each Monday–Sunday week unless you change it in settings.</p></div>
+    </section>
+
+    <!-- HISAB -->
+    <section class="view" id="v-hisab">
+      <div class="card">
+        <div class="weeknav"><button class="btn sm" id="mPrev" aria-label="Previous month">‹</button><b id="mLabel"></b><button class="btn sm" id="mNext" aria-label="Next month">›</button></div>
+        <div class="tw"><table id="hTbl"></table></div>
+        <div class="actions" style="justify-content:flex-start"><button class="btn sm" id="hCopy" data-i="copyStmt">Copy statement</button><button class="btn sm" id="hCsv" data-i="copyCsv">Copy as CSV</button></div>
+        <p class="muted small" data-i="hNote">Self-recorded in Kamai. Useful as proof of income for a rental, loan or grievance, but platforms have not verified it.</p>
+      </div>
+      <div class="card"><h3 data-i="daysTitle">Days worked this financial year</h3><div class="tw"><table id="dTbl"></table></div><p class="muted small" data-i="daysNote">Reported rules under the Code on Social Security (2026) count 90 days with one platform, or 120 across platforms, in a year. Confirm on the e-Shram portal before relying on this.</p></div>
+      <div class="card"><h3 data-i="backup">Your data</h3><p class="muted small" data-i="backupNote">Everything stays on this phone. Copy a backup and keep it in WhatsApp or notes. Paste it back on a new phone.</p><div class="actions" style="justify-content:flex-start"><button class="btn sm" id="bkCopy" data-i="bkCopy">Copy backup</button><button class="btn sm" id="bkPaste" data-i="bkPaste">Restore from backup</button><button class="btn sm danger" id="bkReset" data-i="bkReset">Start fresh</button></div><div id="bkArea"></div></div>
+    </section>
+
+    <details class="why-m card" id="whyM"><summary data-i="howCalc">How is this calculated?</summary><div id="whyMBody"></div></details>
+  </main>
+
+  <aside class="why" id="why" aria-label="How Kamai calculates this"></aside>
+</div>
+
+<div class="doc" id="doc"><article id="caseDoc"><!--CASE:START--><h1>Kamai: what a delivery rider really keeps per hour</h1>
+<p><em>Product case study · Nandini Kshatriya · October 2026</em></p>
+<blockquote>
+<p><strong>How to read the labels.</strong></p>
+<ul>
+<li><span class="tag v">Verified</span> a figure I read in the published source, with its date, sample and method.</li>
+<li><span class="tag c">Company claim</span> a figure published by a platform about itself.</li>
+<li><span class="tag q">Qualitative</span> a quote, reported complaint or single case.</li>
+<li><span class="tag a">Assumption</span> my judgment, untested.</li>
+<li><span class="tag s">Simulated</span> the example rider &quot;Ravi&quot; and all his numbers.</li>
+</ul>
+<p>I have not interviewed riders. Every user insight here comes from published surveys, studies, government documents and reporting, listed at the end.</p>
+</blockquote>
+<h2>In short</h2>
+<ul>
+<li><strong>Problem:</strong> a food or quick-commerce rider sees gross pay per order. They don&#39;t see what they keep per hour after fuel, the bike, the phone and unpaid waiting. Pay rules and incentive targets change often, and the platforms, unions and researchers each publish a different &quot;earnings per hour&quot;.</li>
+<li><strong>What I built:</strong> a phone-first, bilingual (English/Hindi) app where a rider logs a shift in about six fields. Kamai turns it into:<ul>
+<li><strong>real earnings per logged-in hour</strong></li>
+<li><strong>a pay-cut alert per app</strong></li>
+<li><strong>a verdict on whether an incentive target is worth the extra hours</strong></li>
+<li><strong>a 14-day cash plan</strong> that lines weekly payouts up against daily fuel and monthly EMIs</li>
+<li><strong>a monthly statement</strong> the rider owns</li>
+</ul>
+</li>
+<li><strong>Key product decision:</strong> count <em>logged-in</em> hours, waiting included, and include EMI and phone costs. Published &quot;net&quot; figures usually leave those out. <span class="tag s">Simulated</span> Over 28 days the example rider grosses ₹102 per logged-in hour, the figure Zomato reports. Fuel and repairs take 27%, close to IDInsight&#39;s ~32%. Adding EMI and phone takes costs to 43% and leaves ₹58 an hour. These figures shift slightly with the date, because the example is generated relative to today.</li>
+<li><strong>Not claimed:</strong> no users, no usage numbers, no outcomes. The example rider is simulated.</li>
+</ul>
+<h2>1. Problem</h2>
+<p>India&#39;s delivery riders are paid per order, plus distance, incentives and surge. They pay their own fuel, repairs, phone and often a vehicle EMI or daily scooter rent. Three facts make &quot;how much did I really earn?&quot; hard to answer:</p>
+<ol>
+<li><p><strong>Everyone measures it differently.</strong></p>
+<ul>
+<li>Zomato reported partners earn <strong>₹102 per logged-in hour</strong> (2025, gross, excluding tips) and assumed about 20% for fuel and maintenance <span class="tag c">Company claim</span>.</li>
+<li>A phone survey of 2,547 platform workers, sampled from a platform&#39;s admin data, measured operating costs at <strong>about 32% of gross</strong> <span class="tag v">Verified</span> (IDInsight, Mar 2025).</li>
+<li>A union put net pay at <strong>about ₹81 an hour</strong> <span class="tag q">Qualitative</span> (TGPWA, Jan 2026, with no cost inputs disclosed).</li>
+</ul>
+</li>
+<li><p><strong>Waiting is unpaid but real.</strong> In a survey of 5,082 delivery workers across 8 cities, 42.8% reported about 1 hour a day of idle time and 34.1% about 2 hours <span class="tag v">Verified</span> (PAIGAM–IFAT, <em>Prisoners on Wheels?</em>, ~Mar 2024, purposive and snowball sampling, union-linked). The Economic Survey 2025-26 recommends minimum pay that <em>includes waiting time</em> <span class="tag v">Verified</span> (via PTI, 29 Jan 2026).</p>
+</li>
+<li><p><strong>Pay rules change without warning.</strong> Reported examples:</p>
+<ul>
+<li>Swiggy widened the delivery radius while base pay stayed at ₹20 (Mumbai, Oct 2023).</li>
+<li>Blinkit moved Saturday payouts to weekday rates (May 2024).</li>
+<li>Workers alleged Zepto cut per-order pay from ₹30 to ₹10–15 (Hyderabad, May 2025), which Zepto disputed.</li>
+</ul>
+<p>On 31 Dec 2025, striking workers demanded a review of &quot;algorithms that set incentives and payouts&quot; <span class="tag q">Qualitative</span>.</p>
+</li>
+</ol>
+<p><strong>Job to be done:</strong> &quot;Before I log in, or decide to chase a target, I want to know what an hour of riding actually leaves in my pocket, so I can choose when, where and for which app to work, and spot a pay cut before it costs me a week.&quot;</p>
+<h2>2. Research (secondary only)</h2>
+<h3>2a. Earnings and costs</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Source · date</th>
+<th>Sample · method</th>
+<th>Label</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>₹102 per logged-in hour (2025), up from ₹92, plus ₹2.6/hr in tips</td>
+<td>Zomato CEO post, via Business Today, 2 Jan 2026</td>
+<td>All Zomato partners, company data</td>
+<td><span class="tag c">Company claim</span></td>
+</tr>
+<tr>
+<td>Operating costs ≈ 32% of gross and net ₹75–115/hr. The two write-ups of the same survey disagree, so I quote the range.</td>
+<td>IDInsight, Mar 2025, and IDR, 20 Jan 2026</td>
+<td>2,547 workers, phone survey from platform admin frame</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>57.75% spend ₹201–400 a day on fuel and 50.7% ride 101–150 km a day</td>
+<td>PAIGAM–IFAT, ~Mar 2024</td>
+<td>5,082 delivery workers, 8 cities, face-to-face survey</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>34.4% net under ₹10,000 a month after expenses (Lucknow 69.65%, Bengaluru 8.42%)</td>
+<td>Same</td>
+<td>Same</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>One rider&#39;s month: ₹14,000 gross. Costs: fuel ₹5,100, phone EMI ₹1,200, maintenance ₹800, data ₹600, plus fines and punctures. About ₹6,080 kept.</td>
+<td><em>The India Forum</em>, 28 Jul 2025</td>
+<td>1 worker, participant observation</td>
+<td><span class="tag q">Qualitative</span></td>
+</tr>
+<tr>
+<td>Only 2 of 11 platforms could show workers earn the local minimum wage after costs</td>
+<td>Fairwork India ratings, as reported by BusinessWorld in 2024</td>
+<td>Desk research, interviews, platform documents</td>
+<td><span class="tag v">Verified</span> (secondary report)</td>
+</tr>
+</tbody></table></div>
+<h3>2b. Hours, incentives and money stress</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Source · date</th>
+<th>Sample · method</th>
+<th>Label</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>55.1% work 10–12 hours a day and 48.24% have no weekly day off</td>
+<td>PAIGAM–IFAT, 2024</td>
+<td>5,082</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>The average Zomato partner worked 38 days in 2025, at about 7 hours a day. 2.3% worked more than 250 days</td>
+<td>Zomato CEO post, Jan 2026</td>
+<td>Company data</td>
+<td><span class="tag c">Company claim</span></td>
+</tr>
+<tr>
+<td>About 77% of workers are less than full-time</td>
+<td>IDInsight, 2025</td>
+<td>2,547</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>47.75% get no minimum guarantee or incentive, 32.56% do and 19.69% sometimes do</td>
+<td>PAIGAM–IFAT, 2024</td>
+<td>5,082</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>&quot;If we lose a streak… then we lose incentives&quot;</td>
+<td>Al Jazeera, 28 Jan 2026</td>
+<td>1 rider quoted</td>
+<td><span class="tag q">Qualitative</span></td>
+</tr>
+<tr>
+<td>Waiting is ~25–30% of active time and &quot;generally not factored into compensation&quot;. Penalties are opaque.</td>
+<td>IIIT-Hyderabad, arXiv 2504.17697, 2025</td>
+<td>14 interviews</td>
+<td><span class="tag q">Qualitative</span></td>
+</tr>
+<tr>
+<td>Half of asset owners borrowed to buy the asset, and about a third of those missed a repayment</td>
+<td>IDR (IDInsight), Jan 2026</td>
+<td>2,547</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>About 60% find it hard to meet monthly expenses. About 87% report being affected by ID blocking</td>
+<td>PAIGAM–IFAT, 2024</td>
+<td>5,082</td>
+<td><span class="tag v">Verified</span></td>
+</tr>
+<tr>
+<td>Default payout is weekly. Swiggy launched an &quot;Early Cashout&quot; in Sep 2026</td>
+<td>Restaurant India, 18 Sep 2026</td>
+<td>Company announcement</td>
+<td><span class="tag c">Company claim</span></td>
+</tr>
+</tbody></table></div>
+<h3>2c. Policy context</h3>
+<ul>
+<li><strong>Code on Social Security:</strong> came into force on 21 Nov 2025 <span class="tag v">Verified</span> (PIB). The 2026 central rules reportedly count eligibility as 90 days with one aggregator, or 120 across several. That comes from a law-firm summary, not the gazette, so the app shows it &quot;as reported&quot;.</li>
+<li><strong>Karnataka:</strong> notified a welfare fee of 1%, with a ₹0.50 cap for two-wheeler delivery (I have not yet confirmed from the gazette whether the cap is per trip), from Feb 2026. The Act also requires disclosure of automated decision systems.</li>
+<li><strong>Telangana:</strong> the 2025 draft Bill gives workers a right to information about deductions and the systems that set earnings.</li>
+<li><strong>e-Shram:</strong> more than 5 lakh gig workers were registered by Dec 2025 (Lok Sabha reply).</li>
+</ul>
+<h3>2d. Two segments, not one</h3>
+<p>Union surveys sample committed full-timers: 55% work 10–12-hour days. Company and admin-sampled data covers the whole roster, which is mostly casual (Zomato&#39;s average partner worked 38 days a year). Both are true, for different people. <span class="tag a">Assumption</span>: Kamai&#39;s first users are full-timers, because the money at stake is larger for them and they already think in weekly targets and EMIs.</p>
+<h3>2e. What the evidence does <em>not</em> answer</h3>
+<ul>
+<li>What share of earnings comes from incentives, and how often targets change.</li>
+<li>The burden of carrying cash-on-delivery money.</li>
+<li>Independent weekly costs of renting an e-scooter.</li>
+<li><strong>Whether riders will log shifts by hand.</strong> This is the riskiest assumption for Kamai, and nothing published answers it.</li>
+</ul>
+<h2>3. Users</h2>
+<ul>
+<li><strong>Primary: the full-time rider.</strong> Rides 9–12 hours, usually for one main app and sometimes a second. Owns a petrol bike, half the time on a loan, and pays a phone EMI. Gets paid weekly, pays fuel daily, and owes EMIs monthly. <span class="tag a">Assumption</span>, built from the surveys above.</li>
+<li><strong>Secondary: the part-time rider,</strong> who needs only &quot;was today worth it?&quot;</li>
+<li><strong>Not for (yet):</strong> cab drivers, whose costs and commissions work differently, and riders on platform-owned vehicles.</li>
+</ul>
+<h2>4. Competitors and alternatives</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Alternative</th>
+<th>What it does</th>
+<th>Gap for my rider</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Platform partner apps (Swiggy, Zomato, Zepto…)</td>
+<td>Daily earnings, orders, incentive progress</td>
+<td>One platform at a time and gross only. No costs, no net per hour. The platform has little reason to show net figures.</td>
+</tr>
+<tr>
+<td>Gridwise, Stride (US)</td>
+<td>Syncs gig earnings, tracks mileage and expenses for US tax</td>
+<td>Not available in India and built around US mileage deductions</td>
+</tr>
+<tr>
+<td>KarmaLife and similar fintechs</td>
+<td>Earned-wage access and credit for gig workers, sold through employers</td>
+<td>Credit, not earnings intelligence. B2B distribution.</td>
+</tr>
+<tr>
+<td>EV rental apps (Bounce Daily, Yulu, Zypp)</td>
+<td>Rent and battery swaps. Bounce Daily &quot;from ₹250/day&quot;</td>
+<td>Show what you pay them, not what you keep</td>
+</tr>
+<tr>
+<td>A notebook or WhatsApp notes</td>
+<td>Free, flexible, already used</td>
+<td>No per-hour view, no trend, no alert</td>
+</tr>
+</tbody></table></div>
+<p>I found no Indian product that combines earnings across apps with real costs and net per logged-in hour.</p>
+<h2>5. User journey (as built)</h2>
+<ol>
+<li><strong>First open.</strong> The example rider shows the value before any typing. &quot;Start my own log&quot; opens vehicle and cost settings with sensible defaults.</li>
+<li><strong>After each shift (about 30 seconds).</strong> Enter date, app, slot, hours, orders, km and order pay from the platform&#39;s earnings screen. Incentive, tips, waiting and actual fuel are optional.</li>
+<li><strong>Today.</strong><ul>
+<li>Real earnings per hour for the last day, the week or 28 days.</li>
+<li>The gap against the gross figure the app shows.</li>
+<li>Where the money went: fuel, fixed costs, and waiting share.</li>
+<li>Alerts.</li>
+</ul>
+</li>
+<li><strong>Week.</strong><ul>
+<li>Profit and loss.</li>
+<li>Which app pays better per hour after fuel.</li>
+<li>Best time slots.</li>
+</ul>
+</li>
+<li><strong>Targets.</strong> Enter an incentive and get a verdict: worth chasing / only a little better than usual / not worth extra hours / not reachable safely in the time left. Every input behind the verdict is shown.</li>
+<li><strong>Cash plan.</strong> A 14-day projection of cash with payouts, fuel, home spending and bills, the lowest point, and how many hours would cover a shortfall.</li>
+<li><strong>Hisab.</strong><ul>
+<li>A monthly statement to copy as text or CSV.</li>
+<li>Days worked per app this financial year, against the reported 90/120-day thresholds.</li>
+<li>Backup and restore.</li>
+</ul>
+</li>
+</ol>
+<h2>6. PRD (MVP)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>User story</th>
+<th>Acceptance criteria</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>K1</td>
+<td>As a rider, I can log a shift fast</td>
+<td>Required fields: date, app, slot, hours, orders, km, order pay. The app remembers the last app used. Errors say what to fix (for example, waiting cannot exceed hours logged in). Future dates are rejected.</td>
+</tr>
+<tr>
+<td>K2</td>
+<td>As a rider, I see what I keep per hour</td>
+<td>Net = earned − fuel (entered, or km ÷ mileage × price) − fixed costs (EMI + phone + repairs per riding day, plus daily rent), spread by hours. Divided by logged-in hours. Gross per hour shown alongside.</td>
+</tr>
+<tr>
+<td>K3</td>
+<td>As a rider, I&#39;m warned when an app cuts pay</td>
+<td>Per app: last 7 days vs the 28 before. Needs ≥15 and ≥30 orders. Fires at a ≥10% drop per order. Per-km change is shown as well.</td>
+</tr>
+<tr>
+<td>K4</td>
+<td>As a rider, I know if a target is worth it</td>
+<td>Uses my own orders per hour, km per order and pay per order on that app. Pay per order comes from the last 7 days when there are ≥15 orders, so a fresh cut isn&#39;t averaged away. &quot;Worth&quot; means at least 1.2× my usual ₹/hr after fuel. &quot;Not reachable safely&quot; when usual hours plus extra per day exceed 13.</td>
+</tr>
+<tr>
+<td>K5</td>
+<td>As a rider, I can see if money will run short</td>
+<td>14-day projection. Weekly payout for the previous Monday–Sunday week. Running weeks estimated from the 28-day average. Bills on their day of the month. Shows the lowest point, &quot;safe to spend&quot; after the buffer, and hours needed to cover a gap.</td>
+</tr>
+<tr>
+<td>K6</td>
+<td>As a rider, I own a record of my work</td>
+<td>Monthly statement per app, copied as text or CSV, labelled &quot;self-recorded, not verified by platforms&quot;. Days worked per app this financial year.</td>
+</tr>
+<tr>
+<td>K7</td>
+<td>As a rider, my data stays mine</td>
+<td>Stored on the phone only. Backup is a text string to keep in WhatsApp or notes. No account, no server.</td>
+</tr>
+<tr>
+<td>K8</td>
+<td>As a Hindi-first rider, I can use it in Hindi</td>
+<td>Every rider-facing string in Hindi. Indian number formatting (₹1,23,456).</td>
+</tr>
+</tbody></table></div>
+<p><strong>Non-goals:</strong> reading platform data (no APIs exist, and SMS or screenshot parsing raises privacy and reliability issues), lending, multi-device sync, and cab drivers.</p>
+<h2>7. MVP scope and what I cut</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>In:</strong> logged-in hours as the denominator</td>
+<td>That is how Zomato reports its ₹102, and how the Economic Survey wants pay floors set. Waiting must show up as a cost to the rider.</td>
+</tr>
+<tr>
+<td><strong>In:</strong> EMI and phone in fixed costs</td>
+<td>Riders pay them and published cost shares usually leave them out. Showing both numbers makes the difference visible.</td>
+</tr>
+<tr>
+<td><strong>In:</strong> recent pay rate in the target verdict</td>
+<td>In testing, the 28-day average hid the simulated Zepto cut and rated a target &quot;a little better than usual&quot; when it was worse. Kamai now uses the last 7 days&#39; rate.</td>
+</tr>
+<tr>
+<td><strong>In:</strong> no chart library</td>
+<td>Low-end phones and patchy data. Charts are hand-drawn SVG and the app is one small page that works offline.</td>
+</tr>
+<tr>
+<td><strong>Out:</strong> automatic import from platform apps</td>
+<td>No APIs exist, and SMS or screenshot parsing is a v2 bet with real privacy risk</td>
+</tr>
+<tr>
+<td><strong>Out:</strong> loans or advances</td>
+<td>A cash-short rider is a vulnerable user. Kamai shows the gap and the hours that would close it, and does not sell credit.</td>
+</tr>
+<tr>
+<td><strong>Out:</strong> EV-vs-petrol calculator</td>
+<td>Evidence is weak (EV riders reportedly earn 20% more, correlational). Settings already support EV rent and per-km charging.</td>
+</tr>
+</tbody></table></div>
+<h2>7b. Design decisions in the October redesign</h2>
+<p>The first version worked but looked like a dashboard. Riders check it at a signal or a restaurant counter, often one-handed on a budget Android phone, so I rebuilt the interface around three rules.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>I chose</th>
+<th>Over</th>
+<th>What it costs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>One big number first (kept per hour), with the gross figure as a sentence under it</td>
+<td>A row of equal KPI cards</td>
+<td>Less on screen at once. The rider gets the answer in one glance, and the gap between &quot;app says&quot; and &quot;you keep&quot; is the point of the product.</td>
+</tr>
+<tr>
+<td>The cash verdict above the cash chart</td>
+<td>Chart first</td>
+<td>The chart becomes supporting detail. Most riders want &quot;will I run short, and when&quot;, not a line graph.</td>
+</tr>
+<tr>
+<td>A bottom tab bar and a floating &quot;Log a shift&quot; button on phones</td>
+<td>Top tabs everywhere</td>
+<td>Takes vertical space. Logging is the action that keeps every number honest, so it is always one tap away.</td>
+</tr>
+<tr>
+<td>Hand-drawn SVG charts and self-hosted fonts</td>
+<td>A chart library and Google Fonts</td>
+<td>More code to maintain. The page stays small and works offline as an installable web app.</td>
+</tr>
+<tr>
+<td>A warm ledger palette where green only ever means money kept</td>
+<td>A multi-colour dashboard</td>
+<td>Fewer colours to work with. Fuel, fixed costs and kept money stay readable in both light and dark mode.</td>
+</tr>
+<tr>
+<td>English and Hindi with Devanagari-ready fonts (Baloo 2 and Mukta)</td>
+<td>English only</td>
+<td>Every new string needs two translations. A large share of riders in North India read Hindi first.</td>
+</tr>
+</tbody></table></div>
+<p>On wide screens the app sits in a phone-width column, and a side panel explains how each number is calculated for anyone reviewing the project. On phones that explanation folds into a &quot;How is this calculated?&quot; section at the bottom of each tab.</p>
+<h2>8. Prioritization (RICE, with evidence strength)</h2>
+<p>Reach is the share of an assumed 1,000-rider pilot affected. Impact (0.5–3), confidence and effort are my estimates <span class="tag a">Assumption</span>. Confidence follows the strength of the research behind each feature.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Evidence</th>
+<th>Reach</th>
+<th>Impact</th>
+<th>Confidence</th>
+<th>Effort (weeks)</th>
+<th>RICE</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Net per logged-in hour</td>
+<td>Strong: three conflicting published figures, cost surveys</td>
+<td>1,000</td>
+<td>3</td>
+<td>80%</td>
+<td>1</td>
+<td>2,400</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Fast shift log</td>
+<td>Needed for everything, but manual logging is unvalidated</td>
+<td>1,000</td>
+<td>2</td>
+<td>50%</td>
+<td>1</td>
+<td>1,000</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Pay-cut alert</td>
+<td>Medium: repeated reported cuts</td>
+<td>700</td>
+<td>2</td>
+<td>60%</td>
+<td>0.5</td>
+<td>1,680</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Target evaluator</td>
+<td>Medium: opacity well documented, size unknown</td>
+<td>500</td>
+<td>2</td>
+<td>50%</td>
+<td>1</td>
+<td>500</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>14-day cash plan</td>
+<td>Medium: borrowing and missed repayments</td>
+<td>600</td>
+<td>2</td>
+<td>50%</td>
+<td>1.5</td>
+<td>400</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Monthly statement + days worked</td>
+<td>Medium: blocking, new grievance rights</td>
+<td>600</td>
+<td>1</td>
+<td>60%</td>
+<td>0.5</td>
+<td>720</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Hindi UI</td>
+<td>Strong for reach in North India. Kannada and Telugu next.</td>
+<td>1,000</td>
+<td>1</td>
+<td>80%</td>
+<td>0.5</td>
+<td>1,600</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>SMS / screenshot import</td>
+<td>Would cut logging effort, with privacy risk</td>
+<td>1,000</td>
+<td>2</td>
+<td>30%</td>
+<td>4</td>
+<td>150</td>
+<td>v2</td>
+</tr>
+<tr>
+<td>Welfare enrolment nudges (e-Shram, PM-JAY)</td>
+<td>Weak as a core job</td>
+<td>400</td>
+<td>1</td>
+<td>40%</td>
+<td>1</td>
+<td>160</td>
+<td>v2</td>
+</tr>
+</tbody></table></div>
+<h2>9. Success metrics</h2>
+<ul>
+<li><strong>North Star:</strong> riders who log at least 5 shifts in a week and open Today or Targets on 3 or more days that week. They are using the number to plan, not only recording.</li>
+<li><strong>Inputs:</strong><ul>
+<li>Median time to log a shift (target under 30 seconds) <span class="tag a">Assumption</span>.</li>
+<li>Week-4 logging retention.</li>
+<li>Share of riders who set their own costs instead of keeping the defaults.</li>
+</ul>
+</li>
+<li><strong>Decision proxies:</strong><ul>
+<li>Share of target verdicts followed by a matching change in hours that week.</li>
+<li>Share of pay-cut alerts followed by a change in that app&#39;s share of hours within 2 weeks.</li>
+</ul>
+</li>
+<li><strong>Rider outcome (long-term, self-reported):</strong> change in net per logged-in hour after 8 weeks, compared with riders not yet onboarded.</li>
+<li><strong>Guardrails:</strong><ul>
+<li>Average logged-in hours per day must not rise. Kamai should not push riders into longer, less safe days.</li>
+<li>The share of riders who stop logging after a &quot;not worth it&quot; verdict.</li>
+</ul>
+</li>
+</ul>
+<h2>10. Experiment plan</h2>
+<p>None of these has been run.</p>
+<ol>
+<li><strong>Net first or gross first?</strong><ul>
+<li><em>Setup:</em> randomise new users to a Today screen that leads with net per hour (current) or gross per hour with net below it.</li>
+<li><em>Primary metric:</em> week-4 logging retention.</li>
+<li><em>Guardrail:</em> hours logged per day.</li>
+<li><em>Hypothesis:</em> leading with net builds more trust, and so more retention, than the familiar gross number, even though the net number is lower.</li>
+</ul>
+</li>
+<li><strong>Logging friction.</strong><ul>
+<li><em>Setup:</em> the current 7 required fields against 4 (hours, orders, pay, km).</li>
+<li><em>Metrics:</em> completion rate, time to log, and accuracy of net per hour against riders who enter actual fuel.</li>
+</ul>
+</li>
+<li><strong>Target evaluator effect.</strong><ul>
+<li><em>Setup:</em> at rollout, show verdicts to half of riders with an active target.</li>
+<li><em>Primary metric:</em> net per logged-in hour over the target week.</li>
+<li><em>Guardrail:</em> total hours.</li>
+<li><em>Sizing:</em> with roughly 200 riders per arm and a standard deviation near ₹15/hr <span class="tag a">Assumption</span>, a difference of about ₹4.2/hr is detectable at 80% power (two-sided, α = 0.05).</li>
+</ul>
+</li>
+</ol>
+<h2>11. Launch strategy</h2>
+<ul>
+<li><p><strong>Distribution through riders&#39; own networks:</strong></p>
+<ul>
+<li>Rider WhatsApp groups, hub and dark-store waiting areas.</li>
+<li>Worker associations, which have already surveyed 5,000+ riders.</li>
+<li>EV rental hubs, where riders already handle money and paperwork.</li>
+</ul>
+</li>
+<li><p><strong>Language:</strong> Hindi first, then Kannada and Telugu for Bengaluru and Hyderabad, where worker laws are moving.</p>
+</li>
+<li><p><strong>Pilot gate:</strong></p>
+<ul>
+<li>≥40% of onboarded riders still logging in week 4 <span class="tag a">Assumption</span>.</li>
+<li>Median log time under 30 seconds.</li>
+<li>No rise in hours per day.</li>
+</ul>
+</li>
+<li><p><strong>Business model options:</strong></p>
+<ul>
+<li>(a) Free to riders, funded by grants or worker organisations. The cleanest fit with trust.</li>
+<li>(b) B2B2C with EV rental operators, who want riders to stay solvent.</li>
+<li>(c) Later, regulated referrals for insurance or savings.</li>
+</ul>
+<p>Selling rider data to platforms or lenders is ruled out, because it would break the product&#39;s promise.</p>
+</li>
+</ul>
+<h2>12. Risks and ethics</h2>
+<ul>
+<li><strong>Precision theatre.</strong> Fuel is estimated from km unless the rider enters what they paid. The log form says so and asks for actual spend when the rider has it.</li>
+<li><strong>Safety.</strong> The target evaluator flags days over 13 hours as not reachable safely instead of optimising them.</li>
+<li><strong>Record misuse.</strong> The statement says it is self-recorded and unverified, so nobody mistakes it for a platform document.</li>
+<li><strong>Privacy.</strong> No server and no account. Backup is in the rider&#39;s hands.</li>
+</ul>
+<h2>13. What I got wrong along the way</h2>
+<ul>
+<li><strong>The incentive check.</strong> My first version priced the remaining orders at the 28-day average pay. In the simulated Zepto cut, that called a target &quot;a little better than usual&quot; when, at this week&#39;s rate, it paid less than an ordinary hour. The evaluator now uses the recent rate and labels it.</li>
+<li><strong>The first example rider</strong> earned about ₹84 an hour gross, well below Zomato&#39;s reported ₹102. I recalibrated the simulation to ₹102 so the example sits on the published figure rather than making the problem look worse than the evidence supports.</li>
+</ul>
+<h2>14. Connection to ReviewRadar</h2>
+<p>My other project, ReviewRadar, mines app-store reviews. I looked for a public dataset of delivery-<em>partner</em> app reviews to test rider pain points from that side too, and found none. Its &quot;rider apps&quot; scenario is therefore simulated. The natural next step is to scrape partner-app reviews with the open-source scraper and run them through ReviewRadar&#39;s taxonomy (payout delays, incentive rules, ID blocks).</p>
+<h2>15. Limits and next steps</h2>
+<p><strong>Limits.</strong></p>
+<ul>
+<li>No rider has used Kamai. Every screen is tested against a simulated rider, not real logs.</li>
+<li>The riskiest assumption is still unanswered: will riders log shifts by hand, every day, for weeks?</li>
+<li>Costs are only as good as what the rider enters. Fuel defaults to a km-based estimate.</li>
+<li>The 90 and 120 day social-security thresholds come from a law-firm summary, not the gazette.</li>
+</ul>
+<p><strong>Next steps.</strong></p>
+<ol>
+<li>Put the installable app in front of 5 to 10 riders through a worker association or an EV rental hub, with consent, and measure one thing: how many still log a shift on day 7.</li>
+<li>Time the shift form with real riders and cut it to four required fields if the median is above 30 seconds.</li>
+<li>Scrape delivery-partner app reviews and run them through ReviewRadar to test whether pay cuts and incentive rules dominate rider complaints the way the surveys suggest.</li>
+</ol>
+<h2>Sources</h2>
+<ul>
+<li>PAIGAM &amp; IFAT, <em>Prisoners on Wheels?</em> (~Mar 2024): <a href="https://tgpwu.org/wp-content/uploads/2024/03/Report-Final-Print-1.pdf" target="_blank" rel="noopener">https://tgpwu.org/wp-content/uploads/2024/03/Report-Final-Print-1.pdf</a></li>
+<li>IDInsight, &quot;The changing landscape of work&quot;, 24 Mar 2025: <a href="https://www.idinsight.org/article/the-changing-landscape-of-work-insights-into-indias-delivery-platform-gig-workforce/" target="_blank" rel="noopener">https://www.idinsight.org/article/the-changing-landscape-of-work-insights-into-indias-delivery-platform-gig-workforce/</a></li>
+<li>IDR, &quot;What the data reveals about India&#39;s gig workers&quot;, 20 Jan 2026: <a href="https://idronline.org/article/livelihoods/what-the-data-reveals-about-indias-gig-workers/" target="_blank" rel="noopener">https://idronline.org/article/livelihoods/what-the-data-reveals-about-indias-gig-workers/</a></li>
+<li>Business Today, Zomato partner earnings, 2 Jan 2026: <a href="https://www.businesstoday.in/amp/latest/corporate/story/look-at-the-full-picture-deepinder-goyal-breaks-down-delivery-partner-earnings-with-hard-facts-509252-2026-01-02" target="_blank" rel="noopener">https://www.businesstoday.in/amp/latest/corporate/story/look-at-the-full-picture-deepinder-goyal-breaks-down-delivery-partner-earnings-with-hard-facts-509252-2026-01-02</a></li>
+<li>IANS, TGPWA response, 3 Jan 2026: <a href="https://ianslive.in/not-decent-work-gig-workers-union-slams-zomato-ceos-claims--20260103134856" target="_blank" rel="noopener">https://ianslive.in/not-decent-work-gig-workers-union-slams-zomato-ceos-claims--20260103134856</a></li>
+<li>NCAER, food delivery platform workers report, 28 Aug 2023 (N = 924, Prosus-funded): <a href="https://www.ncaer.org/wp-content/uploads/2023/08/NCAER_Report_Platform_Workers_August_28_2023.pdf" target="_blank" rel="noopener">https://www.ncaer.org/wp-content/uploads/2023/08/NCAER_Report_Platform_Workers_August_28_2023.pdf</a></li>
+<li><em>The India Forum</em>, &quot;Twenty Rupees, Twenty Minutes&quot;, 28 Jul 2025: <a href="https://www.theindiaforum.in/tiffin/twenty-rupees-twenty-minutes-what-i-learned-working-indias-gig-economy" target="_blank" rel="noopener">https://www.theindiaforum.in/tiffin/twenty-rupees-twenty-minutes-what-i-learned-working-indias-gig-economy</a></li>
+<li>Suvarnapathaki et al. (IIIT-Hyderabad), arXiv 2504.17697, 2025: <a href="https://arxiv.org/pdf/2504.17697" target="_blank" rel="noopener">https://arxiv.org/pdf/2504.17697</a></li>
+<li>Al Jazeera, 28 Jan 2026: <a href="https://www.aljazeera.com/features/2026/1/28/india-curbs-grocery-under-10-minutes-but-riders-must-still-fatally-race" target="_blank" rel="noopener">https://www.aljazeera.com/features/2026/1/28/india-curbs-grocery-under-10-minutes-but-riders-must-still-fatally-race</a></li>
+<li>BusinessWorld on the Fairwork India ratings (2024 article, report year not stated): <a href="https://businessworld.in/article/fairwork-india-report-exposes-unfair-working-conditions-for-gig-workers-535781" target="_blank" rel="noopener">https://businessworld.in/article/fairwork-india-report-exposes-unfair-working-conditions-for-gig-workers-535781</a></li>
+<li>Outlook Business, Swiggy Mumbai strike, 10 Oct 2023: <a href="https://www.outlookbusiness.com/news/swiggy-workers-strike-over-change-in-payouts-enters-third-day" target="_blank" rel="noopener">https://www.outlookbusiness.com/news/swiggy-workers-strike-over-change-in-payouts-enters-third-day</a></li>
+<li>Outlook Business, Blinkit strike, 21 May 2024: <a href="https://www.outlookbusiness.com/corporate/blinkit-delivery-partners-strike-over-pay-cuts-in-delhi-and-mumbai-report" target="_blank" rel="noopener">https://www.outlookbusiness.com/corporate/blinkit-delivery-partners-strike-over-pay-cuts-in-delhi-and-mumbai-report</a></li>
+<li>MediaNama, Zepto Telangana, 23 May 2025: <a href="https://www.medianama.com/2025/05/223-zepto-workers-backlash-telangana/" target="_blank" rel="noopener">https://www.medianama.com/2025/05/223-zepto-workers-backlash-telangana/</a></li>
+<li>Outlook Business, strike demands, 31 Dec 2025: <a href="https://www.outlookbusiness.com/corporate/no-more-10-minute-orders-union-demands-to-scrap-quick-delivery-model-amid-gig-workers-strike" target="_blank" rel="noopener">https://www.outlookbusiness.com/corporate/no-more-10-minute-orders-union-demands-to-scrap-quick-delivery-model-amid-gig-workers-strike</a></li>
+<li>The Week / PTI, Economic Survey 2025-26, 29 Jan 2026: <a href="https://www.theweek.in/wire-updates/business/2026/01/29/40-pc-gig-workers-earn-below-rs-15k-month-economic-survey-advocates-minimum-per-task-earnings.html" target="_blank" rel="noopener">https://www.theweek.in/wire-updates/business/2026/01/29/40-pc-gig-workers-earn-below-rs-15k-month-economic-survey-advocates-minimum-per-task-earnings.html</a></li>
+<li>PIB, labour codes in force, 21 Nov 2025: <a href="https://labour.gov.in/sites/default/files/pib2192463.pdf" target="_blank" rel="noopener">https://labour.gov.in/sites/default/files/pib2192463.pdf</a></li>
+<li>Bhatt &amp; Joshi Associates, 2026 rules summary (secondary): <a href="https://bhattandjoshiassociates.com/indias-gig-economy-workers-under-social-security-code-2020-legal-rights-implementation-and-2026-rules-update/" target="_blank" rel="noopener">https://bhattandjoshiassociates.com/indias-gig-economy-workers-under-social-security-code-2020-legal-rights-implementation-and-2026-rules-update/</a></li>
+<li>SCC Online, Karnataka welfare fee, 18 Feb 2026: <a href="https://www.scconline.com/blog/post/2026/02/18/karnataka-government-notifies-gig-workers-welfare-fee-mandatory/" target="_blank" rel="noopener">https://www.scconline.com/blog/post/2026/02/18/karnataka-government-notifies-gig-workers-welfare-fee-mandatory/</a></li>
+<li>PRS India, Telangana draft Bill 2025: <a href="https://prsindia.org/bills/states/the-draft-telangana-gig-and-platform-workers-registration-social-security-and-welfare-bill-2025" target="_blank" rel="noopener">https://prsindia.org/bills/states/the-draft-telangana-gig-and-platform-workers-registration-social-security-and-welfare-bill-2025</a></li>
+<li>NewsOnAir, e-Shram registrations, 1 Dec 2025: <a href="https://www.newsonair.gov.in/government-says-31-crore-unorganised-and-5-lakh-gig-workers-now-on-e-shram-portal" target="_blank" rel="noopener">https://www.newsonair.gov.in/government-says-31-crore-unorganised-and-5-lakh-gig-workers-now-on-e-shram-portal</a></li>
+<li>Restaurant India, Swiggy Early Cashout, 18 Sep 2026: <a href="https://www.restaurantindia.in/news/swiggy-introduces-early-cashout-for-food-delivery-partners-ending-weekly-payout-wait.n17262" target="_blank" rel="noopener">https://www.restaurantindia.in/news/swiggy-introduces-early-cashout-for-food-delivery-partners-ending-weekly-payout-wait.n17262</a></li>
+<li>Gridwise expense tracker: <a href="https://gridwise.io/features/expense-tracker" target="_blank" rel="noopener">https://gridwise.io/features/expense-tracker</a></li>
+<li>IBS Intelligence, LoadShare and KarmaLife, 10 Aug 2022: <a href="https://ibsintelligence.com/ibsi-news/loadshare-partners-with-karmalife-to-launch-a-credit-program/" target="_blank" rel="noopener">https://ibsintelligence.com/ibsi-news/loadshare-partners-with-karmalife-to-launch-a-credit-program/</a></li>
+</ul>
+<p>Full research notes, with every figure&#39;s sample size, method and verification status, are in <code>research/kamai_secondary_research.md</code>.</p>
+
+<!--CASE:END--></article></div>
+
+<button class="btn primary fab" id="logBtn" data-i="logShift">+ Log a shift</button>
+
+<dialog id="shiftDlg"><form id="shiftForm" novalidate>
+  <h2 id="shiftTitle" data-i="logShiftT">Log a shift</h2>
+  <div class="fgrid">
+    <div class="f"><label for="sDate" data-i="fDate">Date</label><input id="sDate" type="date" required></div>
+    <div class="f"><label for="sPlat" data-i="fPlat">App</label><select id="sPlat"></select></div>
+    <div class="f"><label for="sSlot" data-i="fSlot">Time slot</label><select id="sSlot"></select></div>
+    <div class="f"><label for="sLogin" data-i="fLogin">Hours logged in</label><input id="sLogin" type="number" inputmode="decimal" min="0.25" max="18" step="0.25" required></div>
+    <div class="f"><label for="sOrders" data-i="fOrders">Orders</label><input id="sOrders" type="number" inputmode="numeric" min="0" max="80" step="1" required></div>
+    <div class="f"><label for="sKm" data-i="fKm">Km ridden</label><input id="sKm" type="number" inputmode="decimal" min="0" max="400" step="1" required></div>
+    <div class="f"><label for="sPay" data-i="fPay">Order pay (₹)</label><input id="sPay" type="number" inputmode="numeric" min="0" step="1" required><span class="hint" data-i="fPayH">From the app's earnings screen, without incentive</span></div>
+    <div class="f"><label for="sInc" data-i="fInc">Incentive / bonus (₹)</label><input id="sInc" type="number" inputmode="numeric" min="0" step="1"></div>
+    <div class="f"><label for="sTips" data-i="fTips">Tips (₹)</label><input id="sTips" type="number" inputmode="numeric" min="0" step="1"></div>
+    <div class="f"><label for="sIdle" data-i="fIdle">Unpaid waiting (hours)</label><input id="sIdle" type="number" inputmode="decimal" min="0" max="18" step="0.25"><span class="hint" data-i="fIdleH">Optional: waiting for orders or at restaurants</span></div>
+    <div class="f full"><label for="sFuel" data-i="fFuel">Fuel or charging you paid (₹)</label><input id="sFuel" type="number" inputmode="numeric" min="0" step="1"><span class="hint" data-i="fFuelH">Optional. Leave empty and Kamai estimates it from km.</span></div>
+  </div>
+  <p class="err" id="sErr" role="alert"></p>
+  <div id="sDelConfirm" class="confirm" hidden><span data-i="delQ">Delete this shift?</span><div class="actions" style="justify-content:flex-start"><button type="button" class="btn sm danger" id="sDelYes" data-i="yesDel">Yes, delete</button><button type="button" class="btn sm" id="sDelNo" data-i="cancel">Cancel</button></div></div>
+  <div class="actions"><button type="button" class="btn danger ghost" id="sDel" hidden data-i="delete">Delete</button><button type="button" class="btn" id="sCancel" data-i="cancel">Cancel</button><button type="submit" class="btn primary" data-i="save">Save</button></div>
+</form></dialog>
+
+<dialog id="tgtDlg"><form id="tgtForm" novalidate>
+  <h2 data-i="addTarget">Add a target</h2>
+  <div class="fgrid">
+    <div class="f"><label for="gPlat" data-i="fPlat">App</label><select id="gPlat"></select></div>
+    <div class="f"><label for="gOrders" data-i="gOrders">Orders needed</label><input id="gOrders" type="number" inputmode="numeric" min="1" step="1" required></div>
+    <div class="f"><label for="gBonus" data-i="gBonus">Bonus (₹)</label><input id="gBonus" type="number" inputmode="numeric" min="1" step="1" required></div>
+    <div class="f"><label for="gStart" data-i="gStart">Counts from</label><input id="gStart" type="date" required></div>
+    <div class="f full"><label for="gEnd" data-i="gEnd">Ends on (last day)</label><input id="gEnd" type="date" required></div>
+  </div>
+  <p class="err" id="gErr" role="alert"></p>
+  <div class="actions"><button type="button" class="btn" id="gCancel" data-i="cancel">Cancel</button><button type="submit" class="btn primary" data-i="save">Save</button></div>
+</form></dialog>
+
+<dialog id="dueDlg"><form id="dueForm" novalidate>
+  <h2 data-i="addDue2">Add a bill or EMI</h2>
+  <div class="fgrid">
+    <div class="f full"><label for="dName" data-i="dName">What is it</label><input id="dName" type="text" maxlength="40" required></div>
+    <div class="f"><label for="dAmt" data-i="dAmt">Amount (₹)</label><input id="dAmt" type="number" inputmode="numeric" min="1" step="1" required></div>
+    <div class="f"><label for="dDay" data-i="dDay">Due day of month</label><input id="dDay" type="number" inputmode="numeric" min="1" max="31" step="1" required></div>
+  </div>
+  <p class="err" id="dErr" role="alert"></p>
+  <div class="actions"><button type="button" class="btn" id="dCancel" data-i="cancel">Cancel</button><button type="submit" class="btn primary" data-i="save">Save</button></div>
+</form></dialog>
+
+<dialog id="setDlg"><form id="setForm" novalidate>
+  <h2 data-i="setTitle">Your vehicle and costs</h2>
+  <p class="muted small" data-i="setIntro">These turn your earnings into what you really keep. Start with rough numbers. You can change them any time.</p>
+  <div class="fgrid">
+    <div class="f full"><label for="pVeh" data-i="pVeh">Vehicle</label><select id="pVeh"><option value="petrol" data-i="vPetrol">Own petrol bike</option><option value="ev_rent" data-i="vEvRent">Rented electric scooter</option><option value="ev_own" data-i="vEvOwn">Own electric scooter</option></select></div>
+    <div class="f pet"><label for="pMil" data-i="pMil">Mileage (km per litre)</label><input id="pMil" type="number" inputmode="decimal" min="10" max="120" step="1"></div>
+    <div class="f pet"><label for="pFuel" data-i="pFuelP">Petrol price (₹ per litre)</label><input id="pFuel" type="number" inputmode="decimal" min="50" max="200" step="0.5"></div>
+    <div class="f ev"><label for="pChg" data-i="pChg">Charging or swap cost (₹ per km)</label><input id="pChg" type="number" inputmode="decimal" min="0" max="10" step="0.05"></div>
+    <div class="f ev rent"><label for="pRent" data-i="pRent">Scooter rent (₹ per day)</label><input id="pRent" type="number" inputmode="numeric" min="0" step="5"></div>
+    <div class="f"><label for="pEmi" data-i="pEmi">Vehicle EMI (₹ per month)</label><input id="pEmi" type="number" inputmode="numeric" min="0" step="50"></div>
+    <div class="f"><label for="pPhone" data-i="pPhone">Phone EMI + data (₹ per month)</label><input id="pPhone" type="number" inputmode="numeric" min="0" step="50"></div>
+    <div class="f"><label for="pMaint" data-i="pMaint">Repairs & servicing (₹ per month)</label><input id="pMaint" type="number" inputmode="numeric" min="0" step="50"></div>
+    <div class="f"><label for="pDays" data-i="pDays">Days you ride per month</label><input id="pDays" type="number" inputmode="numeric" min="1" max="31" step="1"></div>
+    <div class="f"><label for="pPay" data-i="pPayDay">Payout day</label><select id="pPay"></select></div>
+    <div class="f"><label for="pBuf" data-i="pBuf">Safety buffer to keep (₹)</label><input id="pBuf" type="number" inputmode="numeric" min="0" step="100"></div>
+    <div class="f full"><label for="pPlats" data-i="pPlats">Apps you ride for (comma separated)</label><input id="pPlats" type="text" maxlength="120"></div>
+  </div>
+  <p class="err" id="pErr" role="alert"></p>
+  <div class="actions"><button type="button" class="btn" id="pCancel" data-i="cancel">Cancel</button><button type="submit" class="btn primary" data-i="save">Save</button></div>
+</form></dialog>
+
+<script>
+"use strict";
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const inr=(n,d=0)=>"₹"+Number(Math.round(n*10**d)/10**d).toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d});
+const nf=(n,d=0)=>Number(n).toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=n=>Math.round(n*100)+"%";
+const sum=(a,f)=>a.reduce((s,x)=>s+(f?f(x):x),0);
+const DAY=864e5;
+const iso=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const monday=d=>addDays(d,-((d.getDay()+6)%7));
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2400)}
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+async function copyText(txt,okMsg){try{await navigator.clipboard.writeText(txt);toast(okMsg)}catch(e){showCopyBox(txt)}}
+function showCopyBox(txt){$("#bkArea").innerHTML=`<textarea id="copyBox" rows="6" style="width:100%;margin-top:8px" aria-label="Text to copy">${esc(txt)}</textarea>`;show("hisab");const b=$("#copyBox");b.focus();b.select();toast(t("copyManual"))}
+
+/* ================= language ================= */
+const STR={
+en:{viewApp:"Rider app",viewCase:"Case study",tToday:"Today",tWeek:"Week",tTargets:"Targets",tCash:"Cash plan",tHisab:"Hisab",netHr:"Real earnings per hour",rDay:"Last day",rWeek:"This week",r28:"28 days",logShift:"+ Log a shift",logShiftT:"Log a shift",editShiftT:"Edit shift",needsAttention:"Needs your attention",recent:"Recent shifts",tapEdit:"Tap to edit",lNet:"Kept (net)",lFuel:"Fuel",lFixed:"Bike, phone & EMI",weekPL:"Week profit & loss",byPlatform:"Which app pays you better",platNote:"Per hour after fuel. Fixed costs are the same whichever app you ride for, so they are left out of this comparison.",bySlot:"Best time slots (last 28 days)",tgtTitle:"Is this incentive worth chasing?",tgtIntro:"Enter a target from your app. Kamai uses your own speed, pay per order and fuel cost from the last 28 days to check whether the extra hours pay.",addTarget:"+ Add a target",cashTitle:"Next 14 days of cash",cashNow:"Cash + bank now (₹)",house:"Home spending per day (₹)",dues:"Bills and EMIs",addDue:"+ Add",addDue2:"Add a bill or EMI",payouts:"Expected payouts",payNote:"Estimated from what you logged. Platforms pay the Monday after each Monday–Sunday week unless you change it in settings.",copyStmt:"Copy statement",copyCsv:"Copy as CSV",hNote:"Self-recorded in Kamai. Useful as proof of income for a rental, loan or grievance, but platforms have not verified it.",daysTitle:"Days worked this financial year",daysNote:"Reported rules under the Code on Social Security (2026) count 90 days with one platform, or 120 across platforms, in a year. Confirm on the e-Shram portal before relying on this.",backup:"Your data",backupNote:"Everything stays on this phone. Copy a backup and keep it in WhatsApp or notes. Paste it back on a new phone.",bkCopy:"Copy backup",bkPaste:"Restore from backup",bkReset:"Start fresh",howCalc:"How is this calculated?",fDate:"Date",fPlat:"App",fSlot:"Time slot",fLogin:"Hours logged in",fOrders:"Orders",fKm:"Km ridden",fPay:"Order pay (₹)",fPayH:"From the app's earnings screen, without incentive",fInc:"Incentive / bonus (₹)",fTips:"Tips (₹)",fIdle:"Unpaid waiting (hours)",fIdleH:"Optional: waiting for orders or at restaurants",fFuel:"Fuel or charging you paid (₹)",fFuelH:"Optional. Leave empty and Kamai estimates it from km.",delQ:"Delete this shift?",yesDel:"Yes, delete",cancel:"Cancel",delete:"Delete",save:"Save",gOrders:"Orders needed",gBonus:"Bonus (₹)",gStart:"Counts from",gEnd:"Ends on (last day)",dName:"What is it",dAmt:"Amount (₹)",dDay:"Due day of month",setTitle:"Your vehicle and costs",setIntro:"These turn your earnings into what you really keep. Start with rough numbers. You can change them any time.",pVeh:"Vehicle",vPetrol:"Own petrol bike",vEvRent:"Rented electric scooter",vEvOwn:"Own electric scooter",pMil:"Mileage (km per litre)",pFuelP:"Petrol price (₹ per litre)",pChg:"Charging or swap cost (₹ per km)",pRent:"Scooter rent (₹ per day)",pEmi:"Vehicle EMI (₹ per month)",pPhone:"Phone EMI + data (₹ per month)",pMaint:"Repairs & servicing (₹ per month)",pDays:"Days you ride per month",pPayDay:"Payout day",pBuf:"Safety buffer to keep (₹)",pPlats:"Apps you ride for (comma separated)",
+slots:["Morning (6–11)","Lunch (11–3)","Afternoon (3–7)","Dinner (7–11)","Late night (11–2)"],days:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+perHr:"/hr",appShows:(g)=>`The app counts this as ${g}/hr. Fuel and fixed costs take the rest.`,noData:"No shifts in this period yet. Log your first shift to see your real hourly earnings.",
+idleChip:(p)=>`${p} of logged-in time was unpaid waiting`,ordersHr:(x)=>`${x} orders/hr`,costShare:(p)=>`Costs took ${p} of what you earned`,
+gross:"Earned (order pay + incentive + tips)",fuel:"Fuel / charging",fixed:"Bike, phone, EMI share",net:"Kept",hours:"Hours logged in",netHrRow:"Kept per hour",orders:"Orders",km:"Km",
+plat:"App",perOrder:"₹/order",oph:"Orders/hr",afterFuel:"₹/hr after fuel",slot:"Slot",shifts:"Shifts",
+alertDrop:(p,a,b,c)=>`${p} is paying less per order`,alertDropB:(a,b,c,k)=>`${a} per order in the last 7 days vs ${b} over the 28 days before (${c}). Per km: ${k}. Check whether the rate card changed before planning your week.`,
+alertNoDrop:"Pay per order is steady on every app (no drop of 10% or more this week).",alertIdle:(p)=>`Waiting is eating your time: ${p} of logged-in hours this week were unpaid.`,
+alertCash:(d,a)=>`Cash may run short on ${d}: about ${a} below zero. Open Cash plan.`,alertCashOk:(a)=>`Cash looks fine for 14 days. Safe to spend today: ${a}.`,alertTgt:(n,v)=>`${n}: ${v}`,
+editT:"Edit",netOf:(n)=>`${n} kept`,
+tgtProg:(d,n)=>`${d} of ${n} orders done`,tgtLeft:(d)=>d===1?"1 day left":`${d} days left`,tgtEnded:"Ended",
+vDone:"Target reached. Bonus earned.",vWorth:"Worth chasing",vMarg:"Only a little better than usual",vNot:"Not worth extra hours",vTooMuch:"Not reachable safely in the time left",vNoData:"Log a few shifts on this app first",
+kExtraOrders:"Orders still needed",kExtraHrs:"Extra hours at your usual speed",kPerDay:"Extra hours per day",kOrderPay:"Pay from those orders",kRecent:(r)=>`at this week's ${r}/order`,kBonus:"Bonus",kFuelX:"Extra fuel",kValue:"You gain if you hit it",kPerHr:"Gain per extra hour",kUsual:"Your usual ₹/hr after fuel",
+tgtFree:(b)=>`If you would ride these hours anyway, the ${b} bonus is extra money. This check is for hours you would add.`,remove:"Remove",
+lowest:(d,a)=>`Lowest point: ${a} on ${d}`,short:(d,a)=>`You could run short by ${a} around ${d}.`,shortFix:(h,r,d)=>`About ${h} extra hours at your usual ${r}/hr before ${d} would cover it, or ask to move a bill after the next payout.`,
+okCash:(a)=>`Safe to spend today, keeping your buffer: ${a}`,okCashZero:"Keep spending tight until the next payout. Your buffer is not covered yet.",
+payoutFor:(a,b)=>`For ${a} – ${b}`,partial:"(week still running, includes estimate)",due:(d)=>`Due on day ${d} of each month`,noDues:"No bills added yet.",
+hRow:{days:"Days worked",shifts:"Shifts",hours:"Hours logged in",orders:"Orders",km:"Km ridden",pay:"Order pay",inc:"Incentives",tips:"Tips",gross:"Total earned",fuel:"Fuel / charging",fixed:"Fixed costs share",net:"Kept",nph:"Kept per hour"},
+total:"Total",fyDays:"Days",threshold:"Toward 90 days",acrossAll:"All apps (toward 120)",
+stmtHead:(n,m)=>`Earnings statement: ${n}, ${m}. Self-recorded in Kamai, not verified by platforms.`,
+copied:"Copied",copyManual:"Copy is blocked here. The text is selected below, so copy it by hand.",
+demoB:"Example data.",demoT:"Ravi is a fictional Bengaluru rider. His six weeks of shifts are simulated from published survey ranges, not real records.",demoStart:"Start my own log",demoKeep:"Keep exploring",
+ownB:"Your log.",ownT:(n)=>`${n} shifts saved on this phone only.`,resetQ:"Delete every shift, target and bill on this phone?",resetYes:"Yes, start fresh",loadDemo:"Load example data",
+pasteHere:"Paste your backup text here",restore:"Restore",badBackup:"That text is not a Kamai backup. Paste the whole text you copied.",restored:"Backup restored",
+eDate:"Pick a date that is not in the future.",eLogin:"Hours logged in should be between 0.25 and 18.",eIdle:"Waiting cannot be more than hours logged in.",eOrders:"Enter the number of orders (0 or more).",eKm:"Enter km ridden (0 or more).",ePay:"Enter the order pay shown in your app.",eTgt:"Fill orders, bonus and dates. The end date must be on or after the start.",eDue:"Fill the name, amount and a day between 1 and 31.",eSet:"Check the numbers: mileage, prices and days must be above zero.",
+bufferL:"buffer",legPay:"payout",legBill:"bill or EMI",saved:"Saved",deleted:"Deleted",weekOf:(a,b)=>`${a} – ${b}`,noWeek:"No shifts this week."},
+hi:{viewApp:"राइडर ऐप",viewCase:"केस स्टडी",tToday:"आज",tWeek:"हफ़्ता",tTargets:"टारगेट",tCash:"पैसों का प्लान",tHisab:"हिसाब",netHr:"असली कमाई प्रति घंटा",rDay:"पिछला दिन",rWeek:"इस हफ़्ते",r28:"28 दिन",logShift:"+ शिफ़्ट जोड़ें",logShiftT:"शिफ़्ट जोड़ें",editShiftT:"शिफ़्ट बदलें",needsAttention:"ध्यान दें",recent:"हाल की शिफ़्ट",tapEdit:"बदलने के लिए दबाएँ",lNet:"बचा (नेट)",lFuel:"पेट्रोल",lFixed:"बाइक, फ़ोन और EMI",weekPL:"हफ़्ते का हिसाब",byPlatform:"कौन सा ऐप बेहतर देता है",platNote:"पेट्रोल के बाद प्रति घंटा। फ़िक्स्ड खर्च हर ऐप पर एक जैसा है, इसलिए यहाँ नहीं जोड़ा।",bySlot:"सबसे अच्छा समय (पिछले 28 दिन)",tgtTitle:"क्या यह इंसेंटिव लायक है?",tgtIntro:"अपने ऐप का टारगेट डालें। Kamai आपके पिछले 28 दिन की स्पीड, प्रति ऑर्डर पैसे और पेट्रोल खर्च से बताएगा कि एक्स्ट्रा घंटे फ़ायदे के हैं या नहीं।",addTarget:"+ टारगेट जोड़ें",cashTitle:"अगले 14 दिन का पैसा",cashNow:"अभी नकद + बैंक (₹)",house:"घर का खर्च रोज़ (₹)",dues:"बिल और EMI",addDue:"+ जोड़ें",addDue2:"बिल या EMI जोड़ें",payouts:"आने वाला पेमेंट",payNote:"आपकी डाली गई शिफ़्ट से अंदाज़ा। सोमवार–रविवार के हफ़्ते का पेमेंट अगले सोमवार, जब तक आप सेटिंग में न बदलें।",copyStmt:"स्टेटमेंट कॉपी करें",copyCsv:"CSV कॉपी करें",hNote:"Kamai में खुद लिखा गया। किराए, लोन या शिकायत में कमाई का सबूत बन सकता है, पर प्लेटफ़ॉर्म ने इसे जाँचा नहीं है।",daysTitle:"इस वित्त वर्ष में काम के दिन",daysNote:"सामाजिक सुरक्षा संहिता (2026) के बताए गए नियम: एक प्लेटफ़ॉर्म पर 90 दिन, या सभी मिलाकर 120 दिन। भरोसा करने से पहले e-Shram पोर्टल पर जाँचें।",backup:"आपका डेटा",backupNote:"सब कुछ इसी फ़ोन पर रहता है। बैकअप कॉपी करके WhatsApp या नोट्स में रखें। नए फ़ोन पर पेस्ट करें।",bkCopy:"बैकअप कॉपी करें",bkPaste:"बैकअप से वापस लाएँ",bkReset:"नए सिरे से शुरू",howCalc:"यह कैसे गिना गया?",fDate:"तारीख",fPlat:"ऐप",fSlot:"समय",fLogin:"लॉगिन घंटे",fOrders:"ऑर्डर",fKm:"किलोमीटर",fPay:"ऑर्डर का पैसा (₹)",fPayH:"ऐप की कमाई स्क्रीन से, इंसेंटिव के बिना",fInc:"इंसेंटिव / बोनस (₹)",fTips:"टिप (₹)",fIdle:"बिना पैसे का इंतज़ार (घंटे)",fIdleH:"ज़रूरी नहीं: ऑर्डर या रेस्टोरेंट पर इंतज़ार",fFuel:"पेट्रोल या चार्जिंग पर खर्च (₹)",fFuelH:"ज़रूरी नहीं। खाली छोड़ें तो Kamai किलोमीटर से अंदाज़ा लगाएगा।",delQ:"यह शिफ़्ट हटाएँ?",yesDel:"हाँ, हटाएँ",cancel:"रद्द करें",delete:"हटाएँ",save:"सेव करें",gOrders:"कितने ऑर्डर चाहिए",gBonus:"बोनस (₹)",gStart:"कब से गिनती",gEnd:"आख़िरी दिन",dName:"क्या है",dAmt:"रकम (₹)",dDay:"महीने की तारीख",setTitle:"आपकी गाड़ी और खर्च",setIntro:"इनसे आपकी कमाई में से असली बचत निकलती है। अंदाज़े से शुरू करें, बाद में बदल सकते हैं।",pVeh:"गाड़ी",vPetrol:"अपनी पेट्रोल बाइक",vEvRent:"किराए का इलेक्ट्रिक स्कूटर",vEvOwn:"अपना इलेक्ट्रिक स्कूटर",pMil:"माइलेज (किमी प्रति लीटर)",pFuelP:"पेट्रोल का भाव (₹ प्रति लीटर)",pChg:"चार्जिंग/स्वैप खर्च (₹ प्रति किमी)",pRent:"स्कूटर किराया (₹ प्रति दिन)",pEmi:"गाड़ी की EMI (₹ महीना)",pPhone:"फ़ोन EMI + डेटा (₹ महीना)",pMaint:"मरम्मत और सर्विस (₹ महीना)",pDays:"महीने में कितने दिन चलाते हैं",pPayDay:"पेमेंट का दिन",pBuf:"हमेशा बचाकर रखें (₹)",pPlats:"किन ऐप पर चलाते हैं (कॉमा से अलग)",
+slots:["सुबह (6–11)","लंच (11–3)","दोपहर (3–7)","डिनर (7–11)","देर रात (11–2)"],days:["सोम","मंगल","बुध","गुरु","शुक्र","शनि","रवि"],
+perHr:"/घंटा",appShows:(g)=>`ऐप इसे ${g}/घंटा गिनता है। बाकी पेट्रोल और फ़िक्स्ड खर्च में जाता है।`,noData:"इस समय की कोई शिफ़्ट नहीं। पहली शिफ़्ट जोड़ें और असली कमाई प्रति घंटा देखें।",
+idleChip:(p)=>`लॉगिन समय का ${p} बिना पैसे का इंतज़ार`,ordersHr:(x)=>`${x} ऑर्डर/घंटा`,costShare:(p)=>`कमाई का ${p} खर्च में गया`,
+gross:"कमाया (ऑर्डर + इंसेंटिव + टिप)",fuel:"पेट्रोल / चार्जिंग",fixed:"बाइक, फ़ोन, EMI का हिस्सा",net:"बचा",hours:"लॉगिन घंटे",netHrRow:"बचत प्रति घंटा",orders:"ऑर्डर",km:"किमी",
+plat:"ऐप",perOrder:"₹/ऑर्डर",oph:"ऑर्डर/घंटा",afterFuel:"पेट्रोल के बाद ₹/घंटा",slot:"समय",shifts:"शिफ़्ट",
+alertDrop:(p)=>`${p} प्रति ऑर्डर कम दे रहा है`,alertDropB:(a,b,c,k)=>`पिछले 7 दिन ${a} प्रति ऑर्डर, उससे पहले 28 दिन ${b} (${c})। प्रति किमी: ${k}। हफ़्ता प्लान करने से पहले रेट कार्ड देखें।`,
+alertNoDrop:"हर ऐप पर प्रति ऑर्डर पैसा स्थिर है (इस हफ़्ते 10% या ज़्यादा की गिरावट नहीं)।",alertIdle:(p)=>`इंतज़ार में समय जा रहा है: इस हफ़्ते लॉगिन घंटों का ${p} बिना पैसे का था।`,
+alertCash:(d,a)=>`${d} के आसपास पैसा कम पड़ सकता है: लगभग ${a} कम। पैसों का प्लान खोलें।`,alertCashOk:(a)=>`14 दिन तक पैसा ठीक है। आज खर्च कर सकते हैं: ${a}।`,alertTgt:(n,v)=>`${n}: ${v}`,
+editT:"बदलें",netOf:(n)=>`${n} बचा`,
+tgtProg:(d,n)=>`${n} में से ${d} ऑर्डर हुए`,tgtLeft:(d)=>d===1?"1 दिन बाकी":`${d} दिन बाकी`,tgtEnded:"ख़त्म",
+vDone:"टारगेट पूरा। बोनस मिला।",vWorth:"लायक है",vMarg:"आम दिन से थोड़ा ही बेहतर",vNot:"एक्स्ट्रा घंटों के लायक नहीं",vTooMuch:"बचे समय में सुरक्षित रूप से मुमकिन नहीं",vNoData:"पहले इस ऐप की कुछ शिफ़्ट जोड़ें",
+kExtraOrders:"और कितने ऑर्डर",kExtraHrs:"आपकी आम स्पीड से एक्स्ट्रा घंटे",kPerDay:"रोज़ के एक्स्ट्रा घंटे",kOrderPay:"उन ऑर्डर का पैसा",kRecent:(r)=>`इस हफ़्ते के ${r}/ऑर्डर पर`,kBonus:"बोनस",kFuelX:"एक्स्ट्रा पेट्रोल",kValue:"पूरा करने पर फ़ायदा",kPerHr:"हर एक्स्ट्रा घंटे का फ़ायदा",kUsual:"आपकी आम ₹/घंटा (पेट्रोल के बाद)",
+tgtFree:(b)=>`अगर आप ये घंटे वैसे भी चलाते, तो ${b} बोनस सीधा फ़ायदा है। यह जाँच एक्स्ट्रा घंटों के लिए है।`,remove:"हटाएँ",
+lowest:(d,a)=>`सबसे कम: ${d} को ${a}`,short:(d,a)=>`${d} के आसपास ${a} कम पड़ सकते हैं।`,shortFix:(h,r,d)=>`${d} से पहले आपकी आम ${r}/घंटा पर लगभग ${h} एक्स्ट्रा घंटे, या कोई बिल अगले पेमेंट के बाद करवाएँ।`,
+okCash:(a)=>`बफ़र बचाकर आज खर्च कर सकते हैं: ${a}`,okCashZero:"अगले पेमेंट तक खर्च संभलकर करें। बफ़र पूरा नहीं है।",
+payoutFor:(a,b)=>`${a} – ${b} का`,partial:"(हफ़्ता चल रहा है, अंदाज़ा शामिल)",due:(d)=>`हर महीने की ${d} तारीख`,noDues:"अभी कोई बिल नहीं जोड़ा।",
+hRow:{days:"काम के दिन",shifts:"शिफ़्ट",hours:"लॉगिन घंटे",orders:"ऑर्डर",km:"किमी",pay:"ऑर्डर का पैसा",inc:"इंसेंटिव",tips:"टिप",gross:"कुल कमाई",fuel:"पेट्रोल / चार्जिंग",fixed:"फ़िक्स्ड खर्च का हिस्सा",net:"बचा",nph:"बचत प्रति घंटा"},
+total:"कुल",fyDays:"दिन",threshold:"90 दिन की ओर",acrossAll:"सभी ऐप (120 की ओर)",
+stmtHead:(n,m)=>`कमाई स्टेटमेंट: ${n}, ${m}। Kamai में खुद लिखा गया, प्लेटफ़ॉर्म से जाँचा नहीं गया।`,
+copied:"कॉपी हो गया",copyManual:"यहाँ कॉपी बंद है। नीचे टेक्स्ट चुना हुआ है, खुद कॉपी करें।",
+demoB:"उदाहरण डेटा।",demoT:"रवि बेंगलुरु का एक काल्पनिक राइडर है। उसकी छह हफ़्ते की शिफ़्ट सर्वे के आँकड़ों से बनाई गई हैं, असली रिकॉर्ड नहीं।",demoStart:"अपना हिसाब शुरू करें",demoKeep:"देखते रहें",
+ownB:"आपका हिसाब।",ownT:(n)=>`${n} शिफ़्ट सिर्फ़ इसी फ़ोन पर सेव हैं।`,resetQ:"इस फ़ोन से सारी शिफ़्ट, टारगेट और बिल हटाएँ?",resetYes:"हाँ, नए सिरे से",loadDemo:"उदाहरण डेटा लाएँ",
+pasteHere:"अपना बैकअप टेक्स्ट यहाँ पेस्ट करें",restore:"वापस लाएँ",badBackup:"यह Kamai का बैकअप नहीं है। कॉपी किया पूरा टेक्स्ट पेस्ट करें।",restored:"बैकअप वापस आ गया",
+eDate:"आज या पहले की तारीख चुनें।",eLogin:"लॉगिन घंटे 0.25 से 18 के बीच हों।",eIdle:"इंतज़ार लॉगिन घंटों से ज़्यादा नहीं हो सकता।",eOrders:"ऑर्डर की गिनती डालें (0 या ज़्यादा)।",eKm:"किलोमीटर डालें (0 या ज़्यादा)।",ePay:"ऐप में दिखा ऑर्डर का पैसा डालें।",eTgt:"ऑर्डर, बोनस और तारीखें भरें। आख़िरी दिन शुरू के बाद हो।",eDue:"नाम, रकम और 1 से 31 के बीच तारीख भरें।",eSet:"संख्याएँ जाँचें: माइलेज, भाव और दिन शून्य से ज़्यादा हों।",
+bufferL:"बफ़र",legPay:"पेआउट",legBill:"बिल या EMI",saved:"सेव हो गया",deleted:"हटा दिया",weekOf:(a,b)=>`${a} – ${b}`,noWeek:"इस हफ़्ते कोई शिफ़्ट नहीं।"}};
+let LANG=store("kamai_lang")||"en";
+const t=(k,...a)=>{const v=(STR[LANG]||STR.en)[k]??STR.en[k];return typeof v==="function"?v(...a):v};
+const fmtD=(d,o={day:"numeric",month:"short"})=>d.toLocaleDateString(LANG==="hi"?"hi-IN":"en-IN",o);
+function applyLang(){
+  document.documentElement.lang=LANG==="hi"?"hi":"en";
+  $$("[data-i]").forEach(el=>{const v=t(el.dataset.i);if(typeof v==="string")el.textContent=v});
+  $("#lnEn").setAttribute("aria-pressed",LANG==="en");$("#lnHi").setAttribute("aria-pressed",LANG==="hi");
+}
+
+/* ================= data ================= */
+const PLATFORM_DEFAULT=["Swiggy","Zepto"];
+const DEFAULT_PROFILE={name:"",vehicle:"petrol",mileage:45,fuelPrice:103,chargePerKm:1.25,rentPerDay:250,emi:2800,phone:1500,maint:1200,workDays:26,payDay:0,buffer:1000,house:350,balance:3000,platforms:PLATFORM_DEFAULT.slice()};
+let D=null;      // {demo, profile, shifts[], targets[], dues[]}
+function blankData(){return {demo:false,profile:{...DEFAULT_PROFILE,name:"",balance:0,platforms:PLATFORM_DEFAULT.slice()},shifts:[],targets:[],dues:[]}}
+
+/* Example rider. Every number is SIMULATED, sized to published ranges:
+   fuel ₹201–400/day for most riders and 101–150 km/day (PAIGAM–IFAT 2024, N=5,082);
+   gross near Zomato's reported ₹102 per logged-in hour (Jan 2026, company data);
+   1–2 h/day unpaid idle (PAIGAM–IFAT); ~10 h days, one weekly off (union surveys).
+   A designed story: Zepto's per-order pay drops ~25% in the last 9 days, mirroring reported cuts (MediaNama, May 2025). */
+function buildDemo(){
+  const r=rng(7),end=addDays(today(),-1),start=addDays(end,-41),shifts=[];let id=1;
+  const N=(m,s)=>m+s*((r()+r()+r())/1.5-1);
+  for(let d=new Date(start);d<=end;d=addDays(d,1)){
+    if(d.getDay()===2&&r()<.8)continue; // Tuesdays mostly off
+    const ds=iso(d),late=(end-d)/DAY<9;
+    const lunchH=Math.max(2.5,Math.round(N(4,.5)*4)/4),dinH=Math.max(3,Math.round(N(4.25,.5)*4)/4);
+    const mk=(plat,slot,h,oph,ppo,kpo,idleF)=>{const o=Math.max(1,Math.round(h*N(oph,.25)));const km=Math.round(o*N(kpo,.4));const pay=Math.round(o*N(ppo,2.5));const tips=r()<.25?Math.round(N(25,10)):0;shifts.push({id:id++,date:ds,platform:plat,slot,login:h,idle:Math.round(h*N(idleF,.04)*4)/4,orders:o,km,pay,inc:0,tips,fuel:null})};
+    mk("Swiggy",1,lunchH,2.1,44,4.6,.17);
+    if(r()<.55)mk("Zepto",2,Math.round(N(2.25,.4)*4)/4,2.6,late?25:33,2.6,.14);
+    mk("Swiggy",3,dinH,2.3,46,4.8,.15);
+  }
+  // weekly Swiggy incentive: ₹500 for 110 orders Mon–Sun (simulated rule), credited on the last shift of the week
+  const byWeek={};shifts.filter(s=>s.platform==="Swiggy").forEach(s=>{const k=iso(monday(parse(s.date)));(byWeek[k]||(byWeek[k]=[])).push(s)});
+  Object.entries(byWeek).forEach(([k,arr])=>{const wEnd=addDays(parse(k),6);if(wEnd>end)return;if(sum(arr,s=>s.orders)>=110){arr.sort((a,b)=>a.date<b.date?-1:1);arr[arr.length-1].inc+=500}});
+  // two live targets in a window ending in 2 days, sized from the simulated log so both verdict types appear
+  const tS=addDays(today(),-4),tE=addDays(today(),2),done=pl=>sum(shifts.filter(s=>s.platform===pl&&parse(s.date)>=tS),s=>s.orders);
+  return {demo:true,profile:{...DEFAULT_PROFILE,name:"Ravi (example)",balance:2600,platforms:PLATFORM_DEFAULT.slice()},shifts,
+    targets:[{id:1,platform:"Swiggy",orders:done("Swiggy")+18,bonus:400,start:iso(tS),end:iso(tE)},{id:2,platform:"Zepto",orders:done("Zepto")+24,bonus:120,start:iso(tS),end:iso(tE)}],
+    dues:[{id:1,name:"Bike EMI",amount:2800,day:Math.min(28,addDays(today(),6).getDate())},{id:2,name:"Phone EMI",amount:1200,day:Math.min(28,addDays(today(),11).getDate())},{id:3,name:"Room rent share",amount:2500,day:1}]};
+}
+function load(){const s=store("kamai_v1");D=s&&s.profile&&Array.isArray(s.shifts)?s:buildDemo();D.profile={...DEFAULT_PROFILE,...D.profile}}
+function save(){store("kamai_v1",D)}
+
+/* ================= money model ================= */
+const P=()=>D.profile;
+const costPerKm=()=>P().vehicle==="petrol"?P().fuelPrice/Math.max(P().mileage,1):P().chargePerKm;
+const fixedPerDay=()=>(P().emi+P().phone+P().maint)/Math.max(P().workDays,1)+(P().vehicle==="ev_rent"?P().rentPerDay:0);
+function calc(shifts){
+  // fixed daily cost is spread over that day's shifts by logged-in hours
+  const dayH={};D.shifts.forEach(s=>dayH[s.date]=(dayH[s.date]||0)+s.login);
+  const cpk=costPerKm(),fpd=fixedPerDay();
+  return shifts.map(s=>{const fuel=s.fuel!=null&&s.fuel!==""?+s.fuel:s.km*cpk;const fixed=fpd*s.login/(dayH[s.date]||s.login);const gross=s.pay+(s.inc||0)+(s.tips||0);return {...s,fuelC:fuel,fixedC:fixed,gross,net:gross-fuel-fixed}});
+}
+function agg(rows){const c=calc(rows);const a={n:c.length,gross:sum(c,x=>x.gross),pay:sum(c,x=>x.pay),inc:sum(c,x=>x.inc||0),tips:sum(c,x=>x.tips||0),fuel:sum(c,x=>x.fuelC),fixed:sum(c,x=>x.fixedC),net:sum(c,x=>x.net),login:sum(c,x=>x.login),idle:sum(c,x=>x.idle||0),orders:sum(c,x=>x.orders),km:sum(c,x=>x.km),days:new Set(c.map(x=>x.date)).size};a.nph=a.login?a.net/a.login:0;a.gph=a.login?a.gross/a.login:0;a.mph=a.login?(a.gross-a.fuel)/a.login:0;a.oph=a.login?a.orders/a.login:0;a.ppo=a.orders?a.pay/a.orders:0;a.ppk=a.km?a.pay/a.km:0;a.kpo=a.orders?a.km/a.orders:0;return a}
+const between=(a,b)=>D.shifts.filter(s=>{const d=parse(s.date);return d>=a&&d<=b});
+const lastDate=()=>D.shifts.length?parse(D.shifts.reduce((m,s)=>s.date>m?s.date:m,"")):today();
+
+function payDrops(){
+  const ref=lastDate(),out=[];
+  P().platforms.forEach(pl=>{
+    const cur=agg(between(addDays(ref,-6),ref).filter(s=>s.platform===pl)),base=agg(between(addDays(ref,-34),addDays(ref,-7)).filter(s=>s.platform===pl));
+    if(cur.orders>=15&&base.orders>=30){const ch=(cur.ppo-base.ppo)/base.ppo;out.push({pl,cur,base,ch,kch:base.ppk?(cur.ppk-base.ppk)/base.ppk:0,drop:ch<=-.10})}
+  });
+  return out;
+}
+function targetEval(g){
+  const pl=g.platform,s=parse(g.start),e=parse(g.end),now=today();
+  const done=sum(between(s,e).filter(x=>x.platform===pl),x=>x.orders);
+  const hist=agg(between(addDays(now,-28),now).filter(x=>x.platform===pl));
+  const all=agg(between(addDays(now,-28),now));
+  const need=Math.max(0,g.orders-done),daysLeft=Math.max(0,Math.round((e-now)/DAY)+1);
+  const res={done,need,daysLeft,hist,ended:e<now};
+  if(need===0)return {...res,v:"done"};
+  if(res.ended)return {...res,v:"ended"};
+  if(hist.orders<10||!hist.oph)return {...res,v:"nodata"};
+  // pay per order from the last 7 days when there are enough orders, so a recent rate cut is not averaged away
+  const wk=agg(between(addDays(now,-7),now).filter(x=>x.platform===pl)),useRecent=wk.orders>=15,ppo=useRecent?wk.ppo:hist.ppo;
+  const extraHrs=need/hist.oph,fuelX=need*hist.kpo*costPerKm(),orderPay=need*ppo,value=orderPay+g.bonus-fuelX;
+  const usualDay=all.days?all.login/all.days:8,perDay=extraHrs/Math.max(daysLeft,1),usual=all.mph||hist.mph;
+  const gain=value/extraHrs;
+  const v=usualDay+perDay>13?"toomuch":gain>=usual*1.2?"worth":gain>=usual?"marg":"not";
+  return {...res,extraHrs,fuelX,orderPay,value,perDay,usual,gain,v,ppo,useRecent,ppoChanged:useRecent&&hist.ppo&&Math.abs(wk.ppo-hist.ppo)/hist.ppo>=.1};
+}
+function cashPlan(){
+  const p=P(),now=today(),days=[];
+  const h28=agg(between(addDays(now,-28),addDays(now,-1)));
+  const workRate=Math.min(1,h28.days/28),grossDay=h28.days?h28.gross/h28.days:0,fuelDay=h28.days?h28.fuel/h28.days:0;
+  const payDow=p.payDay; // 0=Mon
+  const payouts=[];
+  // each payout covers the Mon–Sun week before it
+  for(let i=0;i<=14;i++){const d=addDays(now,i);if((d.getDay()+6)%7===payDow&&i>0){const ws=addDays(monday(addDays(d,-7)),0),we=addDays(ws,6);
+    const logged=agg(between(ws,we));const fut=Math.max(0,Math.round((we-addDays(now,-1))/DAY)-0);const remDays=Math.max(0,Math.round((we-now)/DAY)+1);
+    const est=logged.gross+(we>=now?remDays*workRate*grossDay:0);payouts.push({date:d,ws,we,amount:est,partial:we>=now})}}
+  let bal=+p.balance||0;const extraRent=p.vehicle==="ev_rent"?p.rentPerDay:0;
+  for(let i=0;i<14;i++){const d=addDays(now,i);let ev=[];
+    const po=payouts.find(x=>+x.date===+d);if(po){bal+=po.amount;ev.push("+"+inr(po.amount))}
+    bal-=fuelDay*workRate+(+p.house||0)+extraRent*workRate;
+    D.dues.forEach(u=>{const dd=Math.min(u.day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate());if(d.getDate()===dd){bal-=u.amount;ev.push(u.name)}});
+    days.push({d,bal,ev})}
+  const min=days.reduce((m,x)=>x.bal<m.bal?x:m,days[0]);
+  return {days,min,payouts,safe:Math.max(0,Math.min(...days.map(x=>x.bal))-(+p.buffer||0)),mph:h28.mph};
+}
+
+/* ================= rendering ================= */
+let UI={tab:"today",range:"week",wOff:0,mOff:0,editId:null};
+const slotName=i=>t("slots")[i]??"";
+function renderAll(){applyLang();renderDemo();renderToday();renderWeek();renderTargets();renderCash();renderHisab();renderWhy()}
+function renderDemo(){
+  const b=$("#demoBar");
+  if(D.demo){b.innerHTML=`<span><b>${t("demoB")}</b> ${esc(t("demoT"))}</span><div class="row"><button class="btn sm ink" id="demoStart">${esc(t("demoStart"))}</button></div>`;$("#demoStart").onclick=()=>{askReset()}}
+  else b.innerHTML=`<span><b>${t("ownB")}</b> ${esc(t("ownT",D.shifts.length))}</span>`;
+}
+function rangeRows(){const ld=lastDate();if(UI.range==="day")return between(ld,ld);if(UI.range==="week")return between(monday(ld),ld);return between(addDays(ld,-27),ld)}
+function renderToday(){
+  $$("[data-range]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.range===UI.range));
+  const a=agg(rangeRows());
+  if(!a.n){$("#heroNet").innerHTML="–";$("#heroSub").textContent=t("noData");$("#heroBar").innerHTML="";$("#heroLegend").innerHTML="";$("#heroChips").innerHTML=""}
+  else{
+    $("#heroNet").innerHTML=`${inr(a.nph)}<small>${t("perHr")}</small>`;
+    $("#heroSub").textContent=t("appShows",inr(a.gph));
+    const tot=Math.max(a.gross,1);
+    $("#heroBar").innerHTML=`<i style="width:${Math.max(0,a.net)/tot*100}%;background:var(--net)"></i><i style="width:${a.fuel/tot*100}%;background:var(--fuel)"></i><i style="width:${a.fixed/tot*100}%;background:var(--fixed)"></i>`;
+    $("#heroLegend").innerHTML=[["net",t("lNet"),a.net],["fuel",t("lFuel"),a.fuel],["fixed",t("lFixed"),a.fixed]].map(([k,l,v])=>`<div style="--c:var(--${k})"><span>${l}</span><b class="num">${inr(v)}</b></div>`).join("");
+    $("#heroChips").innerHTML=[`<span class="chip">${t("costShare",pct((a.fuel+a.fixed)/tot))}</span>`,a.idle?`<span class="chip">${t("idleChip",pct(a.idle/a.login))}</span>`:"",`<span class="chip">${t("ordersHr",nf(a.oph,1))}</span>`].join("");
+  }
+  // alerts
+  const al=[];
+  payDrops().filter(x=>x.drop).forEach(x=>al.push(["bad",t("alertDrop",esc(x.pl)),t("alertDropB",inr(x.cur.ppo,1),inr(x.base.ppo,1),(x.ch>0?"+":"")+Math.round(x.ch*100)+"%",inr(x.base.ppk,1)+" → "+inr(x.cur.ppk,1))]));
+  if(!al.length&&payDrops().length)al.push(["good",t("alertNoDrop"),""]);
+  const w=agg(between(monday(lastDate()),lastDate()));if(w.login&&w.idle/w.login>=.15)al.push(["warn",t("alertIdle",pct(w.idle/w.login)),""]);
+  D.targets.forEach(g=>{const e=targetEval(g);if(e.v==="ended")return;const vt={done:t("vDone"),worth:t("vWorth"),marg:t("vMarg"),not:t("vNot"),toomuch:t("vTooMuch"),nodata:t("vNoData")}[e.v];al.push([e.v==="worth"||e.v==="done"?"good":e.v==="nodata"?"warn":"warn",`${esc(g.platform)} · ${t("tgtProg",e.done,g.orders)} · ${inr(g.bonus)}`,vt])});
+  const cp=cashPlan();if(cp.min.bal<0)al.push(["bad",t("alertCash",fmtD(cp.min.d,{weekday:"short",day:"numeric",month:"short"}),inr(-cp.min.bal)),""]);else al.push(cp.safe>0?["good",t("alertCashOk",inr(cp.safe)),""]:["warn",t("okCashZero"),t("lowest",fmtD(cp.min.d,{weekday:"short",day:"numeric",month:"short"}),inr(cp.min.bal))]);
+  $("#alerts").innerHTML=al.map(([c,h,b])=>`<div class="alert ${c}"><span class="stripe"></span><div><b>${h}</b>${b?`<span class="muted small">${b}</span>`:""}</div></div>`).join("");
+  const rec=calc([...D.shifts].sort((a,b)=>a.date===b.date?b.slot-a.slot:a.date<b.date?1:-1).slice(0,8));
+  $("#recent").innerHTML=rec.length?rec.map(s=>`<div class="item"><button class="link" data-edit="${s.id}"><span class="t">${fmtD(parse(s.date),{weekday:"short",day:"numeric",month:"short"})} · ${esc(s.platform)}</span><br><span class="muted small">${esc(slotName(s.slot))} · ${nf(s.login,2).replace(/\.00$/,"")} h · ${s.orders} ${t("orders").toLowerCase()} · ${s.km} km</span></button><div class="r"><span class="net">${inr(s.net)}</span><br><span class="muted small">${inr(s.gross)} − ${inr(s.fuelC+s.fixedC)}</span></div></div>`).join(""):`<p class="muted">${t("noData")}</p>`;
+}
+function weekBars(rows,ws){
+  const W=440,H=200,pad=30,top0=22,bw=(W-pad)/7,c=calc(rows),ld=iso(lastDate());
+  const days=Array.from({length:7},(_,i)=>{const d=iso(addDays(ws,i));const x=c.filter(s=>s.date===d);return {d,net:sum(x,s=>s.net),fuel:sum(x,s=>s.fuelC),fixed:sum(x,s=>s.fixedC),n:x.length}});
+  const max=Math.max(500,...days.map(d=>Math.max(0,d.net)+d.fuel+d.fixed));const step=max>2000?1000:500,top=Math.ceil(max/step)*step;const y=v=>H-22-(v/top)*(H-22-top0);
+  let g="";for(let v=0;v<=top;v+=step)g+=`<line x1="${pad}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1" ${v?'stroke-dasharray="2 4"':""}/><text x="${pad-6}" y="${y(v)+4}" font-size="10" text-anchor="end">${v>=1000?(v/1000)+"k":v}</text>`;
+  days.forEach((d,i)=>{const x=pad+i*bw+bw*.2,w=bw*.6;let base=0;const parts=[["fixed",d.fixed],["fuel",d.fuel],["net",Math.max(0,d.net)]].filter(p=>p[1]>0);
+    parts.forEach(([k,v],j)=>{const h=y(base)-y(base+v);const last=j===parts.length-1;g+=`<path d="M${x},${y(base)} v${-h+(last?5:0)} ${last?`q0,-5 5,-5 h${w-10} q5,0 5,5`:`h${w}`} v${h-(last?5:0)} z" fill="var(--${k})"><title>${t(k==="net"?"lNet":k==="fuel"?"lFuel":"lFixed")} ${inr(v)}</title></path>`;base+=v});
+    if(d.n)g+=`<text x="${x+w/2}" y="${y(base)-6}" font-size="10.5" text-anchor="middle" style="fill:var(--net);font-weight:700">${d.net>=1000?(d.net/1000).toFixed(1)+"k":Math.round(d.net)}</text>`;
+    g+=`<text x="${x+w/2}" y="${H-6}" font-size="11" text-anchor="middle" style="${d.d===ld?"fill:var(--ink);font-weight:700":""}">${t("days")[i]}</text>`});
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Daily earnings split into kept, fuel and fixed costs">${g}</svg>`;
+}
+function renderWeek(){
+  const ws=addDays(monday(lastDate()),7*UI.wOff),we=addDays(ws,6),rows=between(ws,we),a=agg(rows),prev=agg(between(addDays(ws,-7),addDays(ws,-1)));
+  $("#wLabel").textContent=t("weekOf",fmtD(ws),fmtD(we));$("#wNext").disabled=UI.wOff>=0;
+  $("#wChart").innerHTML=rows.length?weekBars(rows,ws):`<p class="muted">${t("noWeek")}</p>`;
+  const dl=(c,p,good)=>{if(!prev.n)return "";const d=c-p;if(Math.abs(d)<.5)return "";return `<span class="small" style="color:var(--${(d>0)===good?"net":"bad"})">${d>0?"▲":"▼"}${inr(Math.abs(d))}</span>`};
+  $("#wPL").innerHTML=a.n?`<tbody><tr><td>${t("gross")}</td><td class="n">${inr(a.gross)}</td></tr><tr><td>− ${t("fuel")}</td><td class="n">${inr(a.fuel)}</td></tr><tr><td>− ${t("fixed")}</td><td class="n">${inr(a.fixed)}</td></tr><tr class="total"><td>${t("net")}</td><td class="n">${inr(a.net)} ${dl(a.net,prev.net,true)}</td></tr><tr><td>${t("hours")}</td><td class="n">${nf(a.login,1)}</td></tr><tr class="total"><td>${t("netHrRow")}</td><td class="n">${inr(a.nph)} ${dl(a.nph,prev.nph,true)}</td></tr></tbody>`:`<tbody><tr><td class="muted">${t("noWeek")}</td></tr></tbody>`;
+  const plats=[...new Set(rows.map(s=>s.platform))];
+  $("#wPlat").innerHTML=plats.length?`<thead><tr><th>${t("plat")}</th><th class="n">${t("perOrder")}</th><th class="n">${t("oph")}</th><th class="n">${t("afterFuel")}</th></tr></thead><tbody>${plats.map(pl=>{const x=agg(rows.filter(s=>s.platform===pl));return `<tr><td>${esc(pl)}</td><td class="n">${inr(x.ppo,1)}</td><td class="n">${nf(x.oph,1)}</td><td class="n"><b>${inr(x.mph)}</b></td></tr>`}).join("")}</tbody>`:"";
+  const l28=between(addDays(lastDate(),-27),lastDate());
+  const slots=[...new Set(l28.map(s=>s.slot))].sort();
+  const sr=slots.map(sl=>({sl,a:agg(l28.filter(s=>s.slot===sl))})).sort((x,y)=>y.a.mph-x.a.mph);
+  $("#wSlot").innerHTML=sr.length?`<thead><tr><th>${t("slot")}</th><th class="n">${t("shifts")}</th><th class="n">${t("oph")}</th><th class="n">${t("afterFuel")}</th></tr></thead><tbody>${sr.map((x,i)=>`<tr><td>${esc(slotName(x.sl))}${i===0&&sr.length>1?' <span class="chip good">best</span>':""}</td><td class="n">${x.a.n}</td><td class="n">${nf(x.a.oph,1)}</td><td class="n"><b>${inr(x.a.mph)}</b></td></tr>`).join("")}</tbody>`:"";
+}
+function renderTargets(){
+  const vt={done:t("vDone"),worth:t("vWorth"),marg:t("vMarg"),not:t("vNot"),toomuch:t("vTooMuch"),nodata:t("vNoData"),ended:t("tgtEnded")};
+  const col={done:"good",worth:"good",marg:"warn",not:"bad",toomuch:"bad",nodata:"warn",ended:""};
+  $("#tgtList").innerHTML=D.targets.map(g=>{const e=targetEval(g);
+    return `<div class="card"><h3><span>${esc(g.platform)} · ${inr(g.bonus)}</span><span class="chip ${col[e.v]}">${e.ended?t("tgtEnded"):t("tgtLeft",e.daysLeft)}</span></h3>
+    <span class="muted small">${fmtD(parse(g.start))} – ${fmtD(parse(g.end))} · ${t("tgtProg",e.done,g.orders)}</span>
+    <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${g.orders}" aria-valuenow="${e.done}"><i style="width:${Math.min(100,e.done/g.orders*100)}%"></i></div>
+    <span class="verdict" style="color:var(--${col[e.v]==="good"?"net":col[e.v]==="bad"?"bad":col[e.v]==="warn"?"warn":"muted"})">${vt[e.v]}</span>
+    ${e.extraHrs!==undefined?`<div class="kv"><span>${t("kExtraOrders")}</span><span>${e.need}</span><span>${t("kExtraHrs")}</span><span>${nf(e.extraHrs,1)} h</span><span>${t("kPerDay")}</span><span>${nf(e.perDay,1)} h</span><span>${t("kOrderPay")}${e.ppoChanged?` <span class="chip warn">${t("kRecent",inr(e.ppo,1))}</span>`:""}</span><span>${inr(e.orderPay)}</span><span>${t("kBonus")}</span><span>+ ${inr(g.bonus)}</span><span>${t("kFuelX")}</span><span>− ${inr(e.fuelX)}</span><span><b>${t("kValue")}</b></span><span>${inr(e.value)}</span><span><b>${t("kPerHr")}</b></span><span>${inr(e.gain)}</span><span>${t("kUsual")}</span><span>${inr(e.usual)}</span></div><p class="muted small">${t("tgtFree",inr(g.bonus))}</p>`:""}
+    <div class="actions" style="justify-content:flex-start"><button class="btn sm" data-tdel="${g.id}">${t("remove")}</button></div></div>`}).join("");
+}
+function renderCash(){
+  const p=P();$("#cBal").value=p.balance;$("#cHouse").value=p.house;
+  const cp=cashPlan(),W=440,H=170,pad=40;
+  const vals=cp.days.map(x=>x.bal),mx=Math.max(1000,...vals),mn=Math.min(0,...vals),y=v=>12+(mx-v)/(mx-mn||1)*(H-40),x=i=>pad+i*(W-pad-10)/13;
+  const pts=cp.days.map((d,i)=>[x(i),y(d.bal)]);
+  let g=`<defs><linearGradient id="cg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--net)" stop-opacity=".22"/><stop offset="1" stop-color="var(--net)" stop-opacity="0"/></linearGradient><clipPath id="neg"><rect x="0" y="${y(0)}" width="${W}" height="${H}"/></clipPath><clipPath id="pos"><rect x="0" y="0" width="${W}" height="${y(0)}"/></clipPath></defs>`;
+  if(mn<0)g+=`<rect x="${pad}" y="${y(0)}" width="${W-10-pad}" height="${H-28-y(0)}" fill="var(--bad-weak)" rx="4"/>`;
+  g+=`<path d="M${pts[0][0]},${y(0)} ${pts.map(p=>"L"+p[0]+","+p[1]).join(" ")} L${pts[pts.length-1][0]},${y(0)} Z" fill="url(#cg)" clip-path="url(#pos)"/>`;
+  g+=`<line x1="${pad}" x2="${W-10}" y1="${y(0)}" y2="${y(0)}" stroke="var(--faint)" stroke-width="1"/><text x="${pad-4}" y="${y(0)+4}" font-size="10" text-anchor="end">₹0</text><text x="${pad-4}" y="${y(mx)+4}" font-size="10" text-anchor="end">${mx>=1000?"₹"+Math.round(mx/1000)+"k":inr(mx)}</text>`;
+  if(p.buffer)g+=`<line x1="${pad}" x2="${W-10}" y1="${y(p.buffer)}" y2="${y(p.buffer)}" stroke="var(--accent)" stroke-dasharray="2 4"/><text x="${W-10}" y="${y(p.buffer)-4}" font-size="10" text-anchor="end" style="fill:var(--accent-text)">${t("bufferL")} ${inr(p.buffer)}</text>`;
+  g+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p.join(",")).join(" ")}"/><polyline fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-linejoin="round" clip-path="url(#neg)" points="${pts.map(p=>p.join(",")).join(" ")}"/>`;
+  cp.days.forEach((d,i)=>{if(d.ev.length)g+=`<circle cx="${x(i)}" cy="${y(d.bal)}" r="4" fill="${d.ev.some(e=>e.startsWith("+"))?"var(--net)":"var(--bad)"}"><title>${esc(fmtD(d.d))}: ${esc(d.ev.join(", "))}</title></circle>`;if(i%2===0)g+=`<text x="${x(i)}" y="${H-6}" font-size="10" text-anchor="middle">${fmtD(d.d,{day:"numeric"})}</text>`});
+  g+=`<circle cx="${x(cp.days.indexOf(cp.min))}" cy="${y(cp.min.bal)}" r="6" fill="none" stroke="var(--${cp.min.bal<0?"bad":"accent"})" stroke-width="2"/>`;
+  $("#cChart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Projected cash balance for the next 14 days">${g}</svg><div class="legend"><span><i style="background:var(--net)"></i>${t("legPay")}</span><span><i style="background:var(--bad)"></i>${t("legBill")}</span></div>`;
+  const md=fmtD(cp.min.d,{weekday:"short",day:"numeric",month:"short"});
+  if(cp.min.bal<0){const hrs=cp.mph>0?Math.ceil(-cp.min.bal/cp.mph):0;$("#cVerdict").innerHTML=`<div class="alert bad"><span class="stripe"></span><div><b>${t("short",md,inr(-cp.min.bal))}</b><span class="muted small">${hrs?t("shortFix",hrs,inr(cp.mph),md):""}</span></div></div>`}
+  else $("#cVerdict").innerHTML=`<div class="alert ${cp.safe>0?"good":"warn"}"><span class="stripe"></span><div><b>${cp.safe>0?t("okCash",inr(cp.safe)):t("okCashZero")}</b><span class="muted small">${t("lowest",md,inr(cp.min.bal))}</span></div></div>`;
+  $("#dueList").innerHTML=D.dues.length?D.dues.map(u=>`<div class="item"><div><span class="t">${esc(u.name)}</span><br><span class="muted small">${t("due",u.day)}</span></div><div class="r"><span class="amt">${inr(u.amount)}</span><br><button class="btn sm ghost" data-ddel="${u.id}">${t("remove")}</button></div></div>`).join(""):`<p class="muted">${t("noDues")}</p>`;
+  $("#payList").innerHTML=cp.payouts.map(x=>`<div class="item"><div><span class="t">${fmtD(x.date,{weekday:"short",day:"numeric",month:"short"})}</span><br><span class="muted small">${t("payoutFor",fmtD(x.ws),fmtD(x.we))} ${x.partial?t("partial"):""}</span></div><div class="r"><span class="net">${inr(x.amount)}</span></div></div>`).join("");
+}
+function monthRange(){const l=lastDate();const s=new Date(l.getFullYear(),l.getMonth()+UI.mOff,1);return [s,new Date(s.getFullYear(),s.getMonth()+1,0)]}
+function statementRows(){const [s,e]=monthRange(),rows=between(s,e),plats=[...new Set(rows.map(x=>x.platform))];return {s,e,rows,cols:[...plats.map(p=>[p,agg(rows.filter(x=>x.platform===p))]),[t("total"),agg(rows)]]}}
+const HKEYS=[["days",x=>nf(x.days)],["shifts",x=>nf(x.n)],["hours",x=>nf(x.login,1)],["orders",x=>nf(x.orders)],["km",x=>nf(x.km)],["pay",x=>inr(x.pay)],["inc",x=>inr(x.inc)],["tips",x=>inr(x.tips)],["gross",x=>inr(x.gross)],["fuel",x=>inr(x.fuel)],["fixed",x=>inr(x.fixed)],["net",x=>inr(x.net)],["nph",x=>inr(x.nph)]];
+function renderHisab(){
+  const st=statementRows();$("#mLabel").textContent=fmtD(st.s,{month:"long",year:"numeric"});$("#mNext").disabled=UI.mOff>=0;
+  const hr=t("hRow");
+  $("#hTbl").innerHTML=st.rows.length?`<thead><tr><th></th>${st.cols.map(c=>`<th class="n">${esc(c[0])}</th>`).join("")}</tr></thead><tbody>${HKEYS.map(([k,f])=>`<tr class="${k==="net"||k==="gross"?"total":""}"><td>${hr[k]}</td>${st.cols.map(c=>`<td class="n">${f(c[1])}</td>`).join("")}</tr>`).join("")}</tbody>`:`<tbody><tr><td class="muted">${t("noData")}</td></tr></tbody>`;
+  const now=today(),fyS=new Date(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1,3,1),fy=between(fyS,now);
+  const plats=[...new Set(fy.map(s=>s.platform))];
+  const row=(n,d,goal)=>`<tr><td>${esc(n)}</td><td class="n">${d}</td><td style="min-width:120px"><div class="prog"><i style="width:${Math.min(100,d/goal*100)}%"></i></div></td></tr>`;
+  $("#dTbl").innerHTML=`<thead><tr><th>${t("plat")}</th><th class="n">${t("fyDays")}</th><th>${t("threshold")}</th></tr></thead><tbody>${plats.map(p=>row(p,new Set(fy.filter(s=>s.platform===p).map(s=>s.date)).size,90)).join("")}${row(t("acrossAll"),new Set(fy.map(s=>s.date)).size,120)}</tbody>`;
+}
+function statementText(csv){
+  const st=statementRows(),hr=t("hRow");
+  if(csv)return [["",...st.cols.map(c=>c[0])].join(","),...HKEYS.map(([k,f])=>[hr[k],...st.cols.map(c=>'"'+f(c[1])+'"')].join(","))].join("\n");
+  return [t("stmtHead",P().name||"—",fmtD(st.s,{month:"long",year:"numeric"})),"",...HKEYS.map(([k,f])=>`${hr[k]}: ${st.cols.map(c=>`${c[0]} ${f(c[1])}`).join(" | ")}`)].join("\n");
+}
+
+/* ---------- reviewer explainer ---------- */
+const WHY={
+today:{h:"Net per logged-in hour, not gross per order",b:`<p>Platforms and riders argue about pay using different numbers. Zomato reported ₹102 per logged-in hour in 2025, gross, and assumed about 20% for costs. A survey sampled from platform data found costs near 32% of gross. A union put net pay at about ₹81 an hour. Kamai computes the rider's own number from the rider's own log.</p>
+<ul><li><b>Earned</b> = order pay + incentives + tips, as shown in the platform app.</li><li><b>Fuel</b> = what the rider entered, or km ÷ mileage × petrol price (EV: km × ₹/km).</li><li><b>Fixed</b> = (vehicle EMI + phone + repairs) ÷ riding days, plus daily scooter rent, spread over that day's shifts by hours.</li><li><b>Per hour</b> uses logged-in hours, so unpaid waiting counts, as the Economic Survey 2025-26 recommends for minimum pay.</li></ul>
+<p>The pay-drop alert compares the last 7 days with the 28 before. It needs at least 15 orders this week and 30 before, and fires at a drop of 10% or more per order.</p>`,s:"Sources: Zomato CEO post via Business Today, 2 Jan 2026 (company data) · IDInsight, Mar 2025 (N = 2,547, phone survey sampled from platform admin data) · TGPWA via IANS, 3 Jan 2026 · Economic Survey 2025-26 via PTI, 29 Jan 2026."},
+week:{h:"Which app and which hours actually pay",b:`<p>Riders often work several slots and sometimes several apps. Comparing them on ₹ per order misleads: a short quick-commerce order pays less but you do more per hour, and ride less. Kamai compares on <b>₹ per hour after fuel</b>, which is the money an extra hour adds.</p><p>Fixed costs are left out of these comparisons because they don't change with the app or slot you pick.</p>`,s:"Pay-structure changes that motivated this view: Swiggy Mumbai (Oct 2023), Blinkit (May 2024) and Zepto Hyderabad (May 2025). These are news reports and the companies dispute them."},
+targets:{h:"The incentive question riders ask every week",b:`<p>Incentives are tied to order or hour targets that change often. Riders describe them as opaque, and an "algorithm review" of incentives was a strike demand in December 2025. The evaluator answers one question: <i>do the extra hours pay?</i></p><ul><li>Extra hours = orders still needed ÷ the rider's own orders per hour on that app (last 28 days).</li><li>Gain = pay for those orders + bonus − extra fuel (km per order × cost per km).</li><li>Verdict compares gain per extra hour with the rider's usual ₹/hr after fuel. "Worth chasing" means at least 20% better.</li><li>If usual daily hours plus the extra needed per day goes above 13, the verdict is "not reachable safely". That threshold is a product choice, not a regulation.</li></ul>`,s:"Evidence: PAIGAM–IFAT 2024 (N = 5,082): 47.75% get no minimum guarantee or incentive · IIIT-Hyderabad interviews 2025 (N = 14) on opaque penalties and streaks · Al Jazeera, 28 Jan 2026."},
+cash:{h:"Weekly payouts, daily fuel, monthly EMIs",b:`<p>Payouts usually come weekly while fuel is paid daily and EMIs monthly. Half of asset-owning workers borrowed to buy the asset, and about a third of those missed a repayment. The plan projects 14 days:</p><ul><li>Start from cash + bank today.</li><li>Add each expected payout on payout day. For a week still running, it adds the logged amount plus the 28-day average for the remaining days.</li><li>Subtract average fuel on working days, home spending, rent, and each bill on its date.</li><li>"Safe to spend" is the lowest projected balance minus the buffer.</li></ul><p>Kamai does not lend money. Pointing a cash-short rider to a loan is a decision for a later version, with care.</p>`,s:"IDInsight via IDR, 20 Jan 2026 (N = 2,547) · PAIGAM–IFAT 2024: about 60% struggle to meet monthly expenses · Swiggy Early Cashout, Restaurant India, 18 Sep 2026."},
+hisab:{h:"A record the rider owns",b:`<p>Most riders have no independent record of their work. 87% in one union survey reported being affected by ID blocking, and new state laws (Karnataka 2025 and a Telangana draft in 2025) create grievance and payout-information rights. A monthly statement and a count of days worked help with three jobs: proof of income, grievances, and checking eligibility for social-security benefits.</p><p>The 90/120-day thresholds come from a law-firm summary of the 2026 central rules and are shown as reported, with a prompt to verify.</p>`,s:"PAIGAM–IFAT 2024 (N = 5,082) · PIB, labour codes in force 21 Nov 2025 · Bhatt & Joshi Associates on the 2026 rules (secondary) · PRS India on the Telangana draft Bill."}};
+function renderWhy(){const w=WHY[UI.tab];const body=`<h2>${w.h}</h2>${w.b}<p class="src">${w.s} Full notes are in the case study.</p>`;$("#why").innerHTML=`<span class="eyebrow">For reviewers · how this screen works</span>${body}`;$("#whyMBody").innerHTML=body}
+
+/* ================= interactions ================= */
+function show(tab){UI.tab=tab;$$(".view").forEach(v=>v.classList.toggle("on",v.id==="v-"+tab));$$("[data-tab]").forEach(b=>b.dataset.tab===tab?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));renderWhy();try{history.replaceState(null,"","#"+tab)}catch(e){}window.scrollTo(0,0)}
+$$("[data-tab]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.tab)));
+$$("[data-range]").forEach(b=>b.addEventListener("click",()=>{UI.range=b.dataset.range;renderToday()}));
+$("#lnEn").onclick=()=>{LANG="en";store("kamai_lang",LANG);renderAll()};
+$("#lnHi").onclick=()=>{LANG="hi";store("kamai_lang",LANG);renderAll()};
+function setView(v){const c=v==="case";$("#shell").hidden=c;$("#logBtn").hidden=c;$("#doc").classList.toggle("on",c);$("#vApp").setAttribute("aria-pressed",!c);$("#vCase").setAttribute("aria-pressed",c);try{history.replaceState(null,"","#"+(c?"case":UI.tab))}catch(e){}window.scrollTo(0,0)}
+$("#vApp").onclick=()=>setView("app");$("#vCase").onclick=()=>setView("case");
+$("#wPrev").onclick=()=>{UI.wOff--;renderWeek()};$("#wNext").onclick=()=>{if(UI.wOff<0){UI.wOff++;renderWeek()}};
+$("#mPrev").onclick=()=>{UI.mOff--;renderHisab()};$("#mNext").onclick=()=>{if(UI.mOff<0){UI.mOff++;renderHisab()}};
+
+// shift form
+function fillSelects(){
+  const plats=P().platforms;["#sPlat","#gPlat"].forEach(id=>{$(id).innerHTML=plats.map(p=>`<option>${esc(p)}</option>`).join("")});
+  $("#sSlot").innerHTML=t("slots").map((s,i)=>`<option value="${i}">${esc(s)}</option>`).join("");
+  $("#pPay").innerHTML=t("days").map((d,i)=>`<option value="${i}">${esc(d)}</option>`).join("");
+}
+function openShift(id){
+  fillSelects();UI.editId=id||null;const s=id?D.shifts.find(x=>x.id===id):null;const last=[...D.shifts].sort((a,b)=>a.date<b.date?1:-1)[0];
+  $("#shiftTitle").textContent=t(s?"editShiftT":"logShiftT");$("#sErr").textContent="";$("#sDelConfirm").hidden=true;$("#sDel").hidden=!s;
+  $("#sDate").value=s?s.date:iso(today());$("#sDate").max=iso(today());$("#sPlat").value=s?s.platform:(last?last.platform:P().platforms[0]);
+  const hr=new Date().getHours();$("#sSlot").value=s?s.slot:(hr<11&&hr>=6?0:hr<15?1:hr<19?2:hr<23?3:4);
+  $("#sLogin").value=s?s.login:"";$("#sOrders").value=s?s.orders:"";$("#sKm").value=s?s.km:"";$("#sPay").value=s?s.pay:"";$("#sInc").value=s&&s.inc?s.inc:"";$("#sTips").value=s&&s.tips?s.tips:"";$("#sIdle").value=s&&s.idle?s.idle:"";$("#sFuel").value=s&&s.fuel!=null?s.fuel:"";
+  $("#shiftDlg").showModal();
+}
+$("#logBtn").onclick=()=>openShift();$("#logBtn2").onclick=()=>openShift();
+$("#recent").addEventListener("click",e=>{const b=e.target.closest("[data-edit]");if(b)openShift(+b.dataset.edit)});
+$("#sCancel").onclick=()=>$("#shiftDlg").close();
+$("#sDel").onclick=()=>{$("#sDelConfirm").hidden=false};$("#sDelNo").onclick=()=>{$("#sDelConfirm").hidden=true};
+$("#sDelYes").onclick=()=>{D.shifts=D.shifts.filter(x=>x.id!==UI.editId);save();$("#shiftDlg").close();renderAll();toast(t("deleted"))};
+$("#shiftForm").addEventListener("submit",e=>{
+  e.preventDefault();const v=id=>$(id).value.trim(),num=id=>v(id)===""?null:Number(v(id));
+  const date=v("#sDate"),login=num("#sLogin"),idle=num("#sIdle")||0,orders=num("#sOrders"),km=num("#sKm"),pay=num("#sPay");
+  const err=!date||parse(date)>today()?"eDate":!(login>=.25&&login<=18)?"eLogin":idle>login?"eIdle":!(orders>=0)||orders===null?"eOrders":km===null||!(km>=0)?"eKm":pay===null||!(pay>=0)?"ePay":null;
+  if(err){$("#sErr").textContent=t(err);return}
+  const rec={date,platform:v("#sPlat"),slot:+v("#sSlot"),login,idle,orders:Math.round(orders),km,pay,inc:num("#sInc")||0,tips:num("#sTips")||0,fuel:num("#sFuel")};
+  if(UI.editId){Object.assign(D.shifts.find(x=>x.id===UI.editId),rec)}else{rec.id=Math.max(0,...D.shifts.map(x=>x.id))+1;D.shifts.push(rec)}
+  save();$("#shiftDlg").close();renderAll();toast(t("saved"));
+});
+// targets
+$("#tgtAdd").onclick=()=>{fillSelects();const m=monday(today());$("#gOrders").value="";$("#gBonus").value="";$("#gStart").value=iso(m);$("#gEnd").value=iso(addDays(m,6));$("#gErr").textContent="";$("#tgtDlg").showModal()};
+$("#gCancel").onclick=()=>$("#tgtDlg").close();
+$("#tgtForm").addEventListener("submit",e=>{e.preventDefault();const o=+$("#gOrders").value,b=+$("#gBonus").value,s=$("#gStart").value,en=$("#gEnd").value;if(!(o>0)||!(b>0)||!s||!en||en<s){$("#gErr").textContent=t("eTgt");return}D.targets.push({id:Math.max(0,...D.targets.map(x=>x.id))+1,platform:$("#gPlat").value,orders:Math.round(o),bonus:b,start:s,end:en});save();$("#tgtDlg").close();renderAll();toast(t("saved"))});
+$("#tgtList").addEventListener("click",e=>{const b=e.target.closest("[data-tdel]");if(!b)return;D.targets=D.targets.filter(x=>x.id!==+b.dataset.tdel);save();renderAll()});
+// cash
+$("#cBal").addEventListener("change",e=>{P().balance=Math.max(0,+e.target.value||0);save();renderCash();renderToday()});
+$("#cHouse").addEventListener("change",e=>{P().house=Math.max(0,+e.target.value||0);save();renderCash();renderToday()});
+$("#dueAdd").onclick=()=>{$("#dName").value="";$("#dAmt").value="";$("#dDay").value="";$("#dErr").textContent="";$("#dueDlg").showModal()};
+$("#dCancel").onclick=()=>$("#dueDlg").close();
+$("#dueForm").addEventListener("submit",e=>{e.preventDefault();const n=$("#dName").value.trim(),a=+$("#dAmt").value,d=+$("#dDay").value;if(!n||!(a>0)||!(d>=1&&d<=31)){$("#dErr").textContent=t("eDue");return}D.dues.push({id:Math.max(0,...D.dues.map(x=>x.id))+1,name:n,amount:a,day:Math.round(d)});save();$("#dueDlg").close();renderAll();toast(t("saved"))});
+$("#dueList").addEventListener("click",e=>{const b=e.target.closest("[data-ddel]");if(!b)return;D.dues=D.dues.filter(x=>x.id!==+b.dataset.ddel);save();renderAll()});
+// settings
+function syncVeh(){const v=$("#pVeh").value;$$("#setForm .pet").forEach(x=>x.hidden=v!=="petrol");$$("#setForm .ev").forEach(x=>x.hidden=v==="petrol");$$("#setForm .rent").forEach(x=>x.hidden=v!=="ev_rent")}
+$("#setBtn").onclick=()=>{fillSelects();applyLang();const p=P();$("#pVeh").value=p.vehicle;$("#pMil").value=p.mileage;$("#pFuel").value=p.fuelPrice;$("#pChg").value=p.chargePerKm;$("#pRent").value=p.rentPerDay;$("#pEmi").value=p.emi;$("#pPhone").value=p.phone;$("#pMaint").value=p.maint;$("#pDays").value=p.workDays;$("#pPay").value=p.payDay;$("#pBuf").value=p.buffer;$("#pPlats").value=p.platforms.join(", ");$("#pErr").textContent="";syncVeh();$("#setDlg").showModal()};
+$("#pVeh").addEventListener("change",syncVeh);$("#pCancel").onclick=()=>$("#setDlg").close();
+$("#setForm").addEventListener("submit",e=>{e.preventDefault();const n=id=>Number($(id).value);const plats=$("#pPlats").value.split(",").map(s=>s.trim()).filter(Boolean).slice(0,6);
+  if(!(n("#pMil")>0)||!(n("#pFuel")>0)||!(n("#pDays")>=1&&n("#pDays")<=31)||n("#pChg")<0||!plats.length){$("#pErr").textContent=t("eSet");return}
+  Object.assign(P(),{vehicle:$("#pVeh").value,mileage:n("#pMil"),fuelPrice:n("#pFuel"),chargePerKm:n("#pChg"),rentPerDay:n("#pRent")||0,emi:n("#pEmi")||0,phone:n("#pPhone")||0,maint:n("#pMaint")||0,workDays:n("#pDays"),payDay:n("#pPay"),buffer:n("#pBuf")||0,platforms:plats});
+  save();$("#setDlg").close();renderAll();toast(t("saved"))});
+// data
+function askReset(){show("hisab");$("#bkArea").innerHTML=`<div class="confirm" style="margin-top:8px"><span>${esc(t("resetQ"))}</span><div class="actions" style="justify-content:flex-start"><button class="btn sm danger" id="rsYes">${esc(t("resetYes"))}</button><button class="btn sm" id="rsNo">${esc(t("cancel"))}</button></div></div>`;$("#rsYes").onclick=()=>{D=blankData();save();$("#bkArea").innerHTML=`<button class="btn sm" id="ldDemo" style="margin-top:8px">${esc(t("loadDemo"))}</button>`;$("#ldDemo").onclick=()=>{D=buildDemo();save();$("#bkArea").innerHTML="";renderAll()};renderAll();$("#setBtn").click()};$("#rsNo").onclick=()=>{$("#bkArea").innerHTML=""}}
+$("#bkReset").onclick=askReset;
+$("#bkCopy").onclick=()=>copyText("KAMAI1:"+JSON.stringify({...D,demo:D.demo}),t("copied"));
+$("#bkPaste").onclick=()=>{$("#bkArea").innerHTML=`<div class="f" style="margin-top:8px"><label for="bkIn">${esc(t("pasteHere"))}</label><textarea id="bkIn" rows="4"></textarea></div><div class="actions" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="bkGo">${esc(t("restore"))}</button></div><p class="err" id="bkErr"></p>`;$("#bkGo").onclick=()=>{try{const s=$("#bkIn").value.trim();if(!s.startsWith("KAMAI1:"))throw 0;const o=JSON.parse(s.slice(7));if(!o.profile||!Array.isArray(o.shifts))throw 0;D=o;D.profile={...DEFAULT_PROFILE,...D.profile};D.targets=D.targets||[];D.dues=D.dues||[];save();$("#bkArea").innerHTML="";renderAll();toast(t("restored"))}catch(e){$("#bkErr").textContent=t("badBackup")}}};
+$("#hCopy").onclick=()=>copyText(statementText(false),t("copied"));
+$("#hCsv").onclick=()=>copyText(statementText(true),t("copied"));
+
+/* ================= boot ================= */
+load();renderAll();
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+(()=>{const h=(location.hash||"").slice(1);if(h==="case")setView("case");else if(document.getElementById("v-"+h))show(h)})();
+</script>
+</body>
+</html>
