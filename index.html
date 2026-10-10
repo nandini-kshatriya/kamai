@@ -155,6 +155,7 @@ a{color:var(--accent-text)}
 .item .amt{font-family:var(--display);font-weight:700;font-size:1.12rem;font-variant-numeric:tabular-nums}
 .item .net{font-family:var(--display);font-weight:700;font-size:1.12rem;font-variant-numeric:tabular-nums;color:var(--net)}
 .item button.link{border:0;background:none;padding:0;text-align:left;width:100%;border-radius:6px}
+.item:has(button.link){cursor:pointer}
 .item:has(button.link):hover{background:linear-gradient(90deg,transparent,var(--sunken) 8%,var(--sunken) 92%,transparent)}
 
 table{width:100%;border-collapse:collapse;font-size:.94rem}
@@ -1330,7 +1331,8 @@ function openShift(id){
   $("#shiftDlg").showModal();
 }
 $("#logBtn").onclick=()=>openShift();$("#logBtn2").onclick=()=>openShift();
-$("#recent").addEventListener("click",e=>{const b=e.target.closest("[data-edit]");if(b)openShift(+b.dataset.edit)});
+// the whole row is the tap target, not just the text inside the button: the amount on the right is what riders tap
+$("#recent").addEventListener("click",e=>{const it=e.target.closest(".item"),b=it&&it.querySelector("[data-edit]");if(b)openShift(+b.dataset.edit)});
 $("#sCancel").onclick=()=>$("#shiftDlg").close();
 $("#sDel").onclick=()=>{$("#sDelConfirm").hidden=false};$("#sDelNo").onclick=()=>{$("#sDelConfirm").hidden=true};
 $("#sDelYes").onclick=()=>{D.shifts=D.shifts.filter(x=>x.id!==UI.editId);save();$("#shiftDlg").close();renderAll();toast(t("deleted"))};

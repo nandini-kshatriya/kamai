@@ -1,5 +1,5 @@
 // Kamai service worker: cache the app shell so a rider can log shifts with no data connection.
-const CACHE = "kamai-v2";
+const CACHE = "kamai-v3";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "fonts/fonts.css"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
